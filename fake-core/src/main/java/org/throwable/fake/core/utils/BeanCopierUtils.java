@@ -6,5 +6,5 @@ package org.throwable.fake.core.utils;
  * @description
  * @since 2017/11/17 0:12
  */
-public class BeanCopierUtils {
+public abstract class BeanCopierUtils {
 }
