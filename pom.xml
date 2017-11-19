@@ -8,6 +8,10 @@
     <modules>
         <module>fake-configuration</module>
         <module>fake-core</module>
+        <module>fake-spring</module>
+        <module>fake-amqp</module>
+        <module>fake-dependencies</module>
+        <module>fake-swagger</module>
     </modules>
     <name>fake</name>
     <properties>
@@ -16,8 +20,10 @@
         <encoding>UTF-8</encoding>
         <!--basic lib-->
         <lombok.version>1.16.18</lombok.version>
+        <cglib.version>3.2.5</cglib.version>
         <!--core lib-->
         <springboot.version>1.5.8.RELEASE</springboot.version>
+        <springfox.version>2.7.0</springfox.version>
         <!--maven plugins-->
         <compiler.version>3.6.2</compiler.version>
     </properties>
@@ -31,12 +37,31 @@
                 <version>${lombok.version}</version>
                 <scope>provided</scope>
             </dependency>
+
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${springboot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>cglib</groupId>
+                <artifactId>cglib</artifactId>
+                <version>${cglib.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger2</artifactId>
+                <version>${springfox.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger-ui</artifactId>
+                <version>${springfox.version}</version>
             </dependency>
 
             <dependency>
@@ -47,7 +72,25 @@
 
             <dependency>
                 <groupId>org.throwable</groupId>
+                <artifactId>fake-spring</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.throwable</groupId>
                 <artifactId>fake-configuration</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.throwable</groupId>
+                <artifactId>fake-swagger</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.throwable</groupId>
+                <artifactId>fake-amqp</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

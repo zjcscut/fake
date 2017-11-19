@@ -17,7 +17,7 @@ public abstract class LocalDateTimeUtils {
 
     private static final Map<String, DateTimeFormatter> FORMATTER_MAP = new HashMap<>(1);
 
-    //register defualt pattern
+    //register default pattern
     static {
         FORMATTER_MAP.put(DATETIME_PATTERN, DateTimeFormatter.ofPattern(DATETIME_PATTERN));
     }

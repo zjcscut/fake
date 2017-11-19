@@ -1,0 +1,74 @@
+{
+  "properties": [
+    {
+      "name": "fake.swagger.title",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties",
+      "defaultValue": "Fake auto application documents"
+    },
+    {
+      "name": "fake.swagger.description",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties",
+      "defaultValue": "Fake auto application documents"
+    },
+    {
+      "name": "fake.swagger.terms-of-service-url",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties",
+      "defaultValue": "http://throwable.coding.me"
+    },
+    {
+      "name": "fake.swagger.contact-name",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties",
+      "defaultValue": "throwable"
+    },
+    {
+      "name": "fake.swagger.contact-url",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties",
+      "defaultValue": "http://throwable.coding.me"
+    },
+    {
+      "name": "fake.swagger.contact-email",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties"
+    },
+    {
+      "name": "fake.swagger.version",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties"
+    },
+    {
+      "name": "fake.swagger.licence",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties"
+    },
+    {
+      "name": "fake.swagger.any",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties"
+    },
+    {
+      "name": "fake.swagger.none",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties"
+    },
+    {
+      "name": "fake.swagger.method-annotation",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties"
+    },
+    {
+      "name": "fake.swagger.class-annotation",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties"
+    },
+    {
+      "name": "fake.swagger.base-package",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.swagger.FakeSwaggerProperties"
+    }
+  ]
+}

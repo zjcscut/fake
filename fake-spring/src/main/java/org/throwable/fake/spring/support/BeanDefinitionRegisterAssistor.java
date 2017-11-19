@@ -1,4 +1,4 @@
-package org.throwable.fake.core.support;
+package org.throwable.fake.spring.support;
 
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;

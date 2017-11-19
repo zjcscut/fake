@@ -5,7 +5,7 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.MultiValueMap;
-import org.throwable.fake.core.support.BeanDefinitionRegisterAssistor;
+import org.throwable.fake.spring.support.BeanDefinitionRegisterAssistor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +64,7 @@ public class FakeAutoConfiguration implements ImportBeanDefinitionRegistrar {
                 log.info("Process registration for Fake module {},configuration class name {}", moduleEntranceEnum.name(),
                         moduleEntranceEnum.getClassName());
             }
-            BeanDefinitionRegisterAssistor.registerBeanDefinitionFromAnnotatedClass(targetClass, registry);
+			BeanDefinitionRegisterAssistor.registerBeanDefinitionFromAnnotatedClass(targetClass, registry);
         }
     }
 }

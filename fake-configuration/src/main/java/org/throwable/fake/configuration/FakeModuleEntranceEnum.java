@@ -12,11 +12,13 @@ public enum FakeModuleEntranceEnum {
 
 	AMQP("org.throwable.fake.amqp.FakeAmqpAutoConfiguration"),
 
-	DURID("org.throwable.fake.amqp.FakeDruidAutoConfiguration"),
+	DURID("org.throwable.fake.druid.FakeDruidAutoConfiguration"),
 
-	MAPPER("org.throwable.fake.amqp.FakeMapperAutoConfiguration"),
+	MAPPER("org.throwable.fake.mapper.FakeMapperAutoConfiguration"),
 
-	SWAGGER("org.throwable.fake.amqp.FakeSwaggerAutoConfiguration");
+	SWAGGER("org.throwable.fake.swagger.FakeSwaggerAutoConfiguration"),
+
+	TX("org.throwable.fake.tx.FakeTxAutoConfiguration");
 
 	private final String className;
 

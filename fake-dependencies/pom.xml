@@ -6,18 +6,19 @@
         <version>1.0-SNASHOP</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>fake-core</artifactId>
-    <packaging>jar</packaging>
-    <name>fake-core</name>
+    <artifactId>fake-dependencies</artifactId>
+    <packaging>war</packaging>
+    <name>fake-dependencies Maven Webapp</name>
+    <url>http://maven.apache.org</url>
     <dependencies>
-
         <dependency>
-            <groupId>cglib</groupId>
-            <artifactId>cglib</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
         </dependency>
-
     </dependencies>
     <build>
-        <finalName>fake-core</finalName>
+        <finalName>fake-dependencies</finalName>
     </build>
 </project>

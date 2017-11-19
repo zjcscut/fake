@@ -6,9 +6,9 @@
         <version>1.0-SNASHOP</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>fake-configuration</artifactId>
+    <artifactId>fake-amqp</artifactId>
     <packaging>jar</packaging>
-    <name>fake-configuration</name>
+    <name>fake-amqp</name>
     <dependencies>
 
         <dependency>
@@ -17,17 +17,12 @@
         </dependency>
 
         <dependency>
-            <groupId>org.throwable</groupId>
-            <artifactId>fake-swagger</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.throwable</groupId>
-            <artifactId>fake-amqp</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
 
     </dependencies>
     <build>
-        <finalName>fake-configuration</finalName>
+        <finalName>fake-amqp</finalName>
     </build>
 </project>

@@ -6,9 +6,9 @@
         <version>1.0-SNASHOP</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>fake-configuration</artifactId>
+    <artifactId>fake-swagger</artifactId>
     <packaging>jar</packaging>
-    <name>fake-configuration</name>
+    <name>fake-swagger</name>
     <dependencies>
 
         <dependency>
@@ -17,17 +17,17 @@
         </dependency>
 
         <dependency>
-            <groupId>org.throwable</groupId>
-            <artifactId>fake-swagger</artifactId>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.throwable</groupId>
-            <artifactId>fake-amqp</artifactId>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
         </dependency>
 
     </dependencies>
     <build>
-        <finalName>fake-configuration</finalName>
+        <finalName>fake-swagger</finalName>
     </build>
 </project>
