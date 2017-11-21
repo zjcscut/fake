@@ -10,5 +10,9 @@ import org.springframework.amqp.support.converter.MessageConverter;
  */
 public interface AmqpMessageConverterFactory {
 
+	/**
+	 * create MessageConverter
+	 * @return MessageConverter
+	 */
 	MessageConverter createMessageConverter();
 }

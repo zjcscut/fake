@@ -8,5 +8,9 @@ package org.throwable.fake.amqp.support;
  */
 public interface FakeAmqpListenerConfigurer {
 
+	/**
+	 * config FakeAmqpListenerEndpointRegistrar
+	 * @param registrar registrar
+	 */
 	void configureRabbitListeners(FakeAmqpListenerEndpointRegistrar registrar);
 }

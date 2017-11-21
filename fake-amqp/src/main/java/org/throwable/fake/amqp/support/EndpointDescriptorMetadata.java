@@ -15,14 +15,11 @@ public final class EndpointDescriptorMetadata {
 	private final int concurrentConsumers;
 	private final int maxConcurrentConsumers;
 
-	public EndpointDescriptorMetadata(String containerFactoryBeanName,
-									  AcknowledgeMode acknowledgeMode,
-									  int concurrentConsumers,
-									  int maxConcurrentConsumers) {
-		this.containerFactoryBeanName = containerFactoryBeanName;
-		this.acknowledgeMode = acknowledgeMode;
-		this.concurrentConsumers = concurrentConsumers;
-		this.maxConcurrentConsumers = maxConcurrentConsumers;
+	public EndpointDescriptorMetadata(Builder builder) {
+		this.containerFactoryBeanName = builder.getContainerFactoryBeanName();
+		this.acknowledgeMode = builder.getAcknowledgeMode();
+		this.concurrentConsumers = builder.getConcurrentConsumers();
+		this.maxConcurrentConsumers = builder.getMaxConcurrentConsumers();
 	}
 
 	public String getContainerFactoryBeanName() {
@@ -40,4 +37,54 @@ public final class EndpointDescriptorMetadata {
 	public int getMaxConcurrentConsumers() {
 		return maxConcurrentConsumers;
 	}
+
+
+	public static class Builder{
+
+		private String containerFactoryBeanName;
+		private AcknowledgeMode acknowledgeMode;
+		private int concurrentConsumers;
+		private int maxConcurrentConsumers;
+
+		public String getContainerFactoryBeanName() {
+			return containerFactoryBeanName;
+		}
+
+		public Builder setContainerFactoryBeanName(String containerFactoryBeanName) {
+			this.containerFactoryBeanName = containerFactoryBeanName;
+			return this;
+		}
+
+		public AcknowledgeMode getAcknowledgeMode() {
+			return acknowledgeMode;
+		}
+
+		public Builder setAcknowledgeMode(AcknowledgeMode acknowledgeMode) {
+			this.acknowledgeMode = acknowledgeMode;
+			return this;
+		}
+
+		public int getConcurrentConsumers() {
+			return concurrentConsumers;
+		}
+
+		public Builder setConcurrentConsumers(int concurrentConsumers) {
+			this.concurrentConsumers = concurrentConsumers;
+			return this;
+		}
+
+		public int getMaxConcurrentConsumers() {
+			return maxConcurrentConsumers;
+		}
+
+		public Builder setMaxConcurrentConsumers(int maxConcurrentConsumers) {
+			this.maxConcurrentConsumers = maxConcurrentConsumers;
+			return this;
+		}
+
+		public EndpointDescriptorMetadata build(){
+			return new EndpointDescriptorMetadata(this);
+		}
+	}
+
 }

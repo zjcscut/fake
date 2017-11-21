@@ -168,7 +168,8 @@ public class FakeAmqpListenerEndpointRegistry implements DisposableBean, SmartLi
 			}
 		}
 		int containerPhase = listenerContainer.getPhase();
-		if (containerPhase < Integer.MAX_VALUE) {  // a custom phase value
+		// a custom phase value
+		if (containerPhase < Integer.MAX_VALUE) {
 			if (this.phase < Integer.MAX_VALUE && this.phase != containerPhase) {
 				throw new IllegalStateException("Encountered phase mismatch between container factory definitions: " +
 						this.phase + " vs " + containerPhase);
