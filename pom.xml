@@ -33,6 +33,7 @@
         <mybaits.jsr310.version>1.0.2</mybaits.jsr310.version>
         <!--maven plugins-->
         <compiler.version>3.6.2</compiler.version>
+        <source.plugin.version>3.0.1</source.plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -176,6 +177,21 @@
                     <target>${jdk.version}</target>
                     <encoding>${encoding}</encoding>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${source.plugin.version}</version>
+                <configuration>
+                    <attach>true</attach>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
