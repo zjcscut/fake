@@ -7,16 +7,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>fake-dependencies</artifactId>
-    <packaging>war</packaging>
-    <name>fake-dependencies Maven Webapp</name>
-    <url>http://maven.apache.org</url>
+    <packaging>jar</packaging>
+    <name>fake-dependencies</name>
     <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>3.8.1</version>
-            <scope>test</scope>
-        </dependency>
+
     </dependencies>
     <build>
         <finalName>fake-dependencies</finalName>

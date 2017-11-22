@@ -1,0 +1,59 @@
+{
+  "properties": [
+    {
+      "name": "fake.mapper.data-source-bean-name",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties",
+      "defaultValue": "dataSource"
+    },
+    {
+      "name": "fake.mapper.data-source-bean-class-name",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties",
+      "defaultValue": "javax.sql.DataSource"
+    },
+    {
+      "name": "fake.mapper.configuration-location",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties"
+    },
+    {
+      "name": "fake.mapper.mapper-packages",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties"
+    },
+    {
+      "name": "fake.mapper.mapper-locations",
+      "type": "java.lang.String[]",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties"
+    },
+    {
+      "name": "fake.mapper.type-aliases-package",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties"
+    },
+    {
+      "name": "fake.mapper.type-handlers-package",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties"
+    },
+    {
+      "name": "fake.mapper.check-configuration-location",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "fake.mapper.enable-pagination-plugin",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties",
+      "defaultValue": false
+    },
+    {
+      "name": "fake.mapper.enable-sql-statistics-plugin",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.throwable.fake.mapper.FakeMapperProperties",
+      "defaultValue": false
+    }
+  ]
+}
