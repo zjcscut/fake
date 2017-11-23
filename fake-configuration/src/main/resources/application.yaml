@@ -17,3 +17,14 @@ fake:
     enable-sql-statistics-plugin: false
     check-configuration-location: true
     configuration-location: classpath:configuration/mybatis-configuration.xml
+  druid:
+    configuration:
+        primary-doge:
+            primary: true
+            url: url
+            driverClassName: sss
+            password: ssss
+            username: ssss
+            properties:
+                    name: doge1
+                    value: doge2

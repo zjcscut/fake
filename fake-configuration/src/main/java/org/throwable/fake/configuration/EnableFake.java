@@ -19,6 +19,7 @@ public @interface EnableFake {
 	FakeModuleEntranceEnum[] modules() default {
 			FakeModuleEntranceEnum.AMQP,
 			FakeModuleEntranceEnum.SWAGGER,
-			FakeModuleEntranceEnum.MAPPER
+			FakeModuleEntranceEnum.MAPPER,
+			FakeModuleEntranceEnum.DURID,
 	};
 }

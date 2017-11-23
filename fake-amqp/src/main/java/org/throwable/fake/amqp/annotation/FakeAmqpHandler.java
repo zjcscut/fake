@@ -10,7 +10,7 @@ import java.lang.annotation.*;
  * @description
  * @since 2017/11/18 19:05
  */
-@Target({ ElementType.METHOD, ElementType.ANNOTATION_TYPE })
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @MessageMapping
 @Documented

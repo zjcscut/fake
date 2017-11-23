@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "fake.druid.configuration",
+      "type": "java.util.Map<java.lang.String, org.throwable.fake.druid.FakeDruidProperties.DataSourceProperties>",
+      "sourceType": "org.throwable.fake.druid.FakeDruidProperties"
+    }
+  ]
+}
