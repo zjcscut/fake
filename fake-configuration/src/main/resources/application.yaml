@@ -21,10 +21,10 @@ fake:
     configuration:
         primary-doge:
             primary: true
-            url: url
-            driverClassName: sss
-            password: ssss
-            username: ssss
+            url: jdbc:mysql://localhost:3306/fake?useSSL=false
+            driverClassName: com.mysql.jdbc.Driver
+            password: root
+            username: root
             properties:
                 filters: stat
 

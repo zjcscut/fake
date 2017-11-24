@@ -128,7 +128,7 @@ public class FakeDruidAutoConfiguration {
 		return dataSourceHolders.stream()
 				.filter(DataSourceHolder::getPrimary)
 				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("None primary datasource has been set!"));
+				.orElseThrow(() -> new IllegalArgumentException("None primary druid datasource has been set!"));
 	}
 
 	@Setter

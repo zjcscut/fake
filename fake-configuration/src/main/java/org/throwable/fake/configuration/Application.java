@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.throwable.fake.configuration.druid.DynamicDataSourceService;
 import org.throwable.fake.configuration.mapper.UserDao;
 import org.throwable.fake.configuration.mapper.entity.User;
 import org.throwable.fake.mapper.support.plugins.condition.Condition;
@@ -27,10 +28,14 @@ public class Application implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         mapper();
+        druid();
     }
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private DynamicDataSourceService dynamicDataSourceService;
 
     private void mapper() {
         Condition condition = Condition.create(User.class);
@@ -41,5 +46,9 @@ public class Application implements CommandLineRunner {
         user.setBirth(LocalDateTime.now());
         int insert = userDao.insert(user);
         System.out.println("插入数据" + (1 == insert ? "成功" : "失败"));
+    }
+
+    private void druid(){
+        System.out.println(dynamicDataSourceService.getUserByName("doge"));
     }
 }
