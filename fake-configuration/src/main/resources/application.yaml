@@ -26,5 +26,5 @@ fake:
             password: ssss
             username: ssss
             properties:
-                    name: doge1
-                    value: doge2
+                filters: stat
+

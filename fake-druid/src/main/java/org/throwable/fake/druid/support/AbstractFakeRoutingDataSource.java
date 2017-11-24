@@ -9,6 +9,7 @@ import org.springframework.util.Assert;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -132,7 +133,7 @@ public abstract class AbstractFakeRoutingDataSource extends AbstractDataSource i
 		if (null == this.targetDataSources) {
 			return null;
 		}
-		return this.targetDataSources.keySet();
+		return Collections.unmodifiableSet(this.targetDataSources.keySet());
 	}
 
 	public String getDefaultLookupKey() {

@@ -15,10 +15,10 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import org.throwable.fake.druid.support.DynamicDataSourceAspect;
 import org.throwable.fake.druid.support.FakeRoutingDataSource;
 import org.throwable.fake.druid.support.FakeTransactionTemplate;
 
-import javax.sql.DataSource;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +68,12 @@ public class FakeDruidAutoConfiguration {
 														   FakeRoutingDataSource fakeRoutingDataSource) {
 		return new FakeTransactionTemplate(transactionManager, fakeRoutingDataSource.getLookupKeys(),
 				fakeRoutingDataSource.getDefaultLookupKey());
+	}
+
+	@Bean
+	@ConditionalOnMissingBean
+	public DynamicDataSourceAspect dynamicDataSourceAspect(FakeRoutingDataSource fakeRoutingDataSource){
+		return new DynamicDataSourceAspect(fakeRoutingDataSource.getLookupKeys());
 	}
 
 	private void validateFakeDruidProperties(FakeDruidProperties fakeDruidProperties) {
