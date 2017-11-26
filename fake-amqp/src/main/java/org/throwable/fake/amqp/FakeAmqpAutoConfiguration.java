@@ -1,10 +1,13 @@
 package org.throwable.fake.amqp;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,5 +42,11 @@ public class FakeAmqpAutoConfiguration implements BeanFactoryAware {
 	@Bean(name = AmqpConstant.AMQP_ENDPOINT_REGISTRY_BEAN_NAME)
 	public FakeAmqpListenerEndpointRegistry fakeAmqpListenerEndpointRegistry() {
 		return new FakeAmqpListenerEndpointRegistry();
+	}
+
+	@Bean
+	@ConditionalOnBean(value = RabbitTemplate.class)
+	public FakeAmqpHealthIndicator fakeAmqpHealthIndicator(RabbitTemplate rabbitTemplate){
+       return new FakeAmqpHealthIndicator(rabbitTemplate);
 	}
 }

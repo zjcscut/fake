@@ -6,6 +6,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.actuate.health.CompositeHealthIndicator;
+import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -18,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.throwable.fake.druid.support.DynamicDataSourceAspect;
 import org.throwable.fake.druid.support.FakeRoutingDataSource;
 import org.throwable.fake.druid.support.FakeTransactionTemplate;
+import org.throwable.fake.spring.support.AggregatorUtils;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,7 +48,7 @@ public class FakeDruidAutoConfiguration {
 	public FakeRoutingDataSource dataSource() throws Exception {
 		validateFakeDruidProperties(fakeDruidProperties);
 		FakeRoutingDataSource fakeRoutingDataSource = new FakeRoutingDataSource();
-		Map<String, Object> targetDataSources = Maps.newHashMap();
+		Map<String, DruidDataSource> targetDataSources = Maps.newHashMap();
 		List<DataSourceHolder> dataSourceHolders = determineTargetDruidDataSources(fakeDruidProperties);
 		for (DataSourceHolder dataSourceHolder : dataSourceHolders) {
 			targetDataSources.put(dataSourceHolder.getLookupKey(), dataSourceHolder.getDruidDataSource());
@@ -72,7 +75,7 @@ public class FakeDruidAutoConfiguration {
 
 	@Bean
 	@ConditionalOnMissingBean
-	public DynamicDataSourceAspect dynamicDataSourceAspect(FakeRoutingDataSource fakeRoutingDataSource){
+	public DynamicDataSourceAspect dynamicDataSourceAspect(FakeRoutingDataSource fakeRoutingDataSource) {
 		return new DynamicDataSourceAspect(fakeRoutingDataSource.getLookupKeys());
 	}
 
@@ -92,6 +95,15 @@ public class FakeDruidAutoConfiguration {
 		}
 		Assert.isTrue(1L == values.parallelStream().filter(FakeDruidProperties.DataSourceProperties::getPrimary).count(),
 				"Primary druid datasource must be set and only one primary should be set!");
+	}
+
+	@Bean
+	public CompositeHealthIndicator fakeDruidHealthIndicator(FakeRoutingDataSource fakeRoutingDataSource) {
+		Map<String, HealthIndicator> indicators = Maps.newHashMap();
+		for (Map.Entry<String, DruidDataSource> entry : fakeRoutingDataSource.getTargetDataSources().entrySet()) {
+			indicators.put(entry.getKey(), new FakeDruidHealthIndicator(entry.getKey(), entry.getValue()));
+		}
+		return new CompositeHealthIndicator(AggregatorUtils.INSTANCE.getDefaultOrderedHealthAggregator(), indicators);
 	}
 
 	private List<DataSourceHolder> determineTargetDruidDataSources(FakeDruidProperties fakeDruidProperties) throws Exception {

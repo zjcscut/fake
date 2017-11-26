@@ -1,5 +1,6 @@
 package org.throwable.fake.druid.support;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.datasource.AbstractDataSource;
 import org.springframework.jdbc.datasource.lookup.DataSourceLookup;
@@ -23,7 +24,7 @@ import java.util.Set;
  */
 public abstract class AbstractFakeRoutingDataSource extends AbstractDataSource implements InitializingBean {
 
-	private Map<String, Object> targetDataSources;
+	private Map<String, DruidDataSource> targetDataSources;
 
 	private Object defaultTargetDataSource;
 
@@ -38,7 +39,7 @@ public abstract class AbstractFakeRoutingDataSource extends AbstractDataSource i
 	private DataSource resolvedDefaultDataSource;
 
 
-	public void setTargetDataSources(Map<String, Object> targetDataSources) {
+	public void setTargetDataSources(Map<String, DruidDataSource> targetDataSources) {
 		this.targetDataSources = targetDataSources;
 	}
 
@@ -67,7 +68,7 @@ public abstract class AbstractFakeRoutingDataSource extends AbstractDataSource i
 			throw new IllegalArgumentException("Property 'defaultLookupKey' is required");
 		}
 		this.resolvedDataSources = new HashMap<>(this.targetDataSources.size());
-		for (Map.Entry<String, Object> entry : this.targetDataSources.entrySet()) {
+		for (Map.Entry<String, DruidDataSource> entry : this.targetDataSources.entrySet()) {
 			String lookupKey = resolveSpecifiedLookupKey(entry.getKey());
 			DataSource dataSource = resolveSpecifiedDataSource(entry.getValue());
 			this.resolvedDataSources.put(lookupKey, dataSource);
@@ -138,6 +139,10 @@ public abstract class AbstractFakeRoutingDataSource extends AbstractDataSource i
 
 	public String getDefaultLookupKey() {
 		return defaultLookupKey;
+	}
+
+	public Map<String, DruidDataSource> getTargetDataSources() {
+		return Collections.unmodifiableMap(this.targetDataSources);
 	}
 
 	protected abstract String determineCurrentLookupKey();
