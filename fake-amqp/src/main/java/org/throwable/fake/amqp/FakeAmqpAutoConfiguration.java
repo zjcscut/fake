@@ -4,6 +4,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -24,9 +25,14 @@ import org.throwable.fake.amqp.support.FakeAmqpListenerEndpointRegistry;
  */
 @EnableConfigurationProperties(value = FakeAmqpProperties.class)
 @Configuration
-public class FakeAmqpAutoConfiguration implements BeanFactoryAware {
+public class FakeAmqpAutoConfiguration implements BeanFactoryAware,SmartInitializingSingleton {
 
+	private final FakeAmqpProperties fakeAmqpProperties;
 	private DefaultListableBeanFactory beanFactory;
+
+	public FakeAmqpAutoConfiguration(FakeAmqpProperties fakeAmqpProperties) {
+		this.fakeAmqpProperties = fakeAmqpProperties;
+	}
 
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -48,5 +54,10 @@ public class FakeAmqpAutoConfiguration implements BeanFactoryAware {
 	@ConditionalOnBean(value = RabbitTemplate.class)
 	public FakeAmqpHealthIndicator fakeAmqpHealthIndicator(RabbitTemplate rabbitTemplate){
        return new FakeAmqpHealthIndicator(rabbitTemplate);
+	}
+
+	@Override
+	public void afterSingletonsInstantiated() {
+
 	}
 }

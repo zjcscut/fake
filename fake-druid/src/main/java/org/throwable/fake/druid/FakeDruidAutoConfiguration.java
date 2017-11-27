@@ -2,6 +2,8 @@ package org.throwable.fake.druid;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidDataSourceFactory;
+import com.alibaba.druid.support.http.StatViewServlet;
+import com.alibaba.druid.support.http.WebStatFilter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Getter;
@@ -10,7 +12,10 @@ import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -38,160 +43,188 @@ import java.util.Set;
 @Configuration
 public class FakeDruidAutoConfiguration {
 
-	public final FakeDruidProperties fakeDruidProperties;
+    private static final String SEPARATOR = ",";
 
-	public FakeDruidAutoConfiguration(FakeDruidProperties fakeDruidProperties) {
-		this.fakeDruidProperties = fakeDruidProperties;
-	}
+    public final FakeDruidProperties fakeDruidProperties;
 
-	@Bean
-	public FakeRoutingDataSource dataSource() throws Exception {
-		validateFakeDruidProperties(fakeDruidProperties);
-		FakeRoutingDataSource fakeRoutingDataSource = new FakeRoutingDataSource();
-		Map<String, DruidDataSource> targetDataSources = Maps.newHashMap();
-		List<DataSourceHolder> dataSourceHolders = determineTargetDruidDataSources(fakeDruidProperties);
-		for (DataSourceHolder dataSourceHolder : dataSourceHolders) {
-			targetDataSources.put(dataSourceHolder.getLookupKey(), dataSourceHolder.getDruidDataSource());
-		}
-		fakeRoutingDataSource.setTargetDataSources(targetDataSources);
-		DataSourceHolder defaultDataSource = determinePrimaryDruidDataSources(dataSourceHolders);
-		fakeRoutingDataSource.setDefaultTargetDataSource(defaultDataSource.getLookupKey(), defaultDataSource.getDruidDataSource());
-		return fakeRoutingDataSource;
-	}
+    public FakeDruidAutoConfiguration(FakeDruidProperties fakeDruidProperties) {
+        this.fakeDruidProperties = fakeDruidProperties;
+    }
 
-	@Bean
-	@ConditionalOnMissingBean(value = PlatformTransactionManager.class)
-	public PlatformTransactionManager transactionManager(FakeRoutingDataSource dataSource) {
-		return new DataSourceTransactionManager(dataSource);
-	}
+    @Bean
+    public FakeRoutingDataSource dataSource() throws Exception {
+        validateFakeDruidProperties(fakeDruidProperties);
+        FakeRoutingDataSource fakeRoutingDataSource = new FakeRoutingDataSource();
+        Map<String, DruidDataSource> targetDataSources = Maps.newHashMap();
+        List<DataSourceHolder> dataSourceHolders = determineTargetDruidDataSources(fakeDruidProperties);
+        for (DataSourceHolder dataSourceHolder : dataSourceHolders) {
+            targetDataSources.put(dataSourceHolder.getLookupKey(), dataSourceHolder.getDruidDataSource());
+        }
+        fakeRoutingDataSource.setTargetDataSources(targetDataSources);
+        DataSourceHolder defaultDataSource = determinePrimaryDruidDataSources(dataSourceHolders);
+        fakeRoutingDataSource.setDefaultTargetDataSource(defaultDataSource.getLookupKey(), defaultDataSource.getDruidDataSource());
+        return fakeRoutingDataSource;
+    }
 
-	@Bean
-	@ConditionalOnMissingBean(value = FakeTransactionTemplate.class)
-	public FakeTransactionTemplate fakeTransactionTemplate(PlatformTransactionManager transactionManager,
-														   FakeRoutingDataSource fakeRoutingDataSource) {
-		return new FakeTransactionTemplate(transactionManager, fakeRoutingDataSource.getLookupKeys(),
-				fakeRoutingDataSource.getDefaultLookupKey());
-	}
+    @Bean
+    @ConditionalOnMissingBean(value = PlatformTransactionManager.class)
+    public PlatformTransactionManager transactionManager(FakeRoutingDataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
+    }
 
-	@Bean
-	@ConditionalOnMissingBean
-	public DynamicDataSourceAspect dynamicDataSourceAspect(FakeRoutingDataSource fakeRoutingDataSource) {
-		return new DynamicDataSourceAspect(fakeRoutingDataSource.getLookupKeys());
-	}
+    @Bean
+    @ConditionalOnMissingBean(value = FakeTransactionTemplate.class)
+    public FakeTransactionTemplate fakeTransactionTemplate(PlatformTransactionManager transactionManager,
+                                                           FakeRoutingDataSource fakeRoutingDataSource) {
+        return new FakeTransactionTemplate(transactionManager, fakeRoutingDataSource.getLookupKeys(),
+                fakeRoutingDataSource.getDefaultLookupKey());
+    }
 
-	private void validateFakeDruidProperties(FakeDruidProperties fakeDruidProperties) {
-		Map<String, FakeDruidProperties.DataSourceProperties> configuration = fakeDruidProperties.getConfiguration();
-		Assert.notEmpty(configuration, "Druid configuration mappings must not be empty!");
-		Set<String> keys = configuration.keySet();
-		Assert.notEmpty(keys, "Druid configuration mapping keys must not be empty!");
-		Assert.isTrue(keys.parallelStream().allMatch(StringUtils::hasText), "Druid configuration mapping key pair must not be blank!");
-		Collection<FakeDruidProperties.DataSourceProperties> values = configuration.values();
-		Assert.notEmpty(values, "Druid configuration mapping values must not be empty!");
-		for (FakeDruidProperties.DataSourceProperties dataSourceProperties : values) {
-			Assert.hasText(dataSourceProperties.getUrl(), "DataSourceProperties property 'url' must be set!");
-			Assert.hasText(dataSourceProperties.getDriverClassName(), "DataSourceProperties property 'driverClassName' must be set!");
-			Assert.hasText(dataSourceProperties.getUsername(), "DataSourceProperties property 'username' must be set!");
-			Assert.hasText(dataSourceProperties.getPassword(), "DataSourceProperties property 'password' must be set!");
-		}
-		Assert.isTrue(1L == values.parallelStream().filter(FakeDruidProperties.DataSourceProperties::getPrimary).count(),
-				"Primary druid datasource must be set and only one primary should be set!");
-	}
+    @Bean
+    @ConditionalOnMissingBean
+    public DynamicDataSourceAspect dynamicDataSourceAspect(FakeRoutingDataSource fakeRoutingDataSource) {
+        return new DynamicDataSourceAspect(fakeRoutingDataSource.getLookupKeys());
+    }
 
-	@Bean
-	public CompositeHealthIndicator fakeDruidHealthIndicator(FakeRoutingDataSource fakeRoutingDataSource) {
-		Map<String, HealthIndicator> indicators = Maps.newHashMap();
-		for (Map.Entry<String, DruidDataSource> entry : fakeRoutingDataSource.getTargetDataSources().entrySet()) {
-			indicators.put(entry.getKey(), new FakeDruidHealthIndicator(entry.getKey(), entry.getValue()));
-		}
-		return new CompositeHealthIndicator(AggregatorUtils.INSTANCE.getDefaultOrderedHealthAggregator(), indicators);
-	}
+    @Bean
+    @ConditionalOnProperty(name = "fake.druid.enable-stat-view", havingValue = "true", matchIfMissing = true)
+    public ServletRegistrationBean druidStatViewServlet() {
+        Assert.notNull(fakeDruidProperties.getUrlMappings(), "UrlMappings must not be null!");
+        Assert.notNull(fakeDruidProperties.getDruidAdminUsername(), "DruidAdminUsername must not be null!");
+        Assert.notNull(fakeDruidProperties.getDruidAdminPassword(), "DruidAdminPassword must not be null!");
+        ServletRegistrationBean servletRegistrationBean = new ServletRegistrationBean(new StatViewServlet(),
+                fakeDruidProperties.getUrlMappings().split(SEPARATOR));
+        servletRegistrationBean.addInitParameter("loginUsername", fakeDruidProperties.getDruidAdminUsername());
+        servletRegistrationBean.addInitParameter("loginPassword", fakeDruidProperties.getDruidAdminPassword());
+        servletRegistrationBean.addInitParameter("resetEnable", fakeDruidProperties.getResetEnable().toString());
+        return servletRegistrationBean;
+    }
 
-	private List<DataSourceHolder> determineTargetDruidDataSources(FakeDruidProperties fakeDruidProperties) throws Exception {
-		List<DataSourceHolder> dataSourceHolders = Lists.newArrayList();
-		for (Map.Entry<String, FakeDruidProperties.DataSourceProperties> propertiesEntry : fakeDruidProperties.getConfiguration().entrySet()) {
-			dataSourceHolders.add(setUpDataSourceHolder(propertiesEntry.getKey(), propertiesEntry.getValue()));
-		}
-		return dataSourceHolders;
-	}
+    @Bean
+    @ConditionalOnProperty(name = "fake.druid.enable-stat-filter", havingValue = "true", matchIfMissing = true)
+    public FilterRegistrationBean druidStatFilter() {
+        Assert.notNull(fakeDruidProperties.getUrlPatterns(), "UrlPatterns must not be null!");
+        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean(new WebStatFilter());
+        filterRegistrationBean.addUrlPatterns(fakeDruidProperties.getUrlPatterns().split(SEPARATOR));
+        if (null != fakeDruidProperties.getExclusions()) {
+            filterRegistrationBean.addInitParameter("exclusions", fakeDruidProperties.getExclusions());
+        }
+        return filterRegistrationBean;
+    }
 
-	private DataSourceHolder setUpDataSourceHolder(String lookupKey, FakeDruidProperties.DataSourceProperties dataSourceProperties) throws Exception {
-		return new DataSourceHolder.Builder()
-				.setPrimary(dataSourceProperties.getPrimary())
-				.setLookupKey(lookupKey)
-				.setDruidDataSource(setUpDruidDataSource(dataSourceProperties))
-				.build();
-	}
+    private void validateFakeDruidProperties(FakeDruidProperties fakeDruidProperties) {
+        Map<String, FakeDruidProperties.DataSourceProperties> configuration = fakeDruidProperties.getConfiguration();
+        Assert.notEmpty(configuration, "Druid configuration mappings must not be empty!");
+        Set<String> keys = configuration.keySet();
+        Assert.notEmpty(keys, "Druid configuration mapping keys must not be empty!");
+        Assert.isTrue(keys.parallelStream().allMatch(StringUtils::hasText), "Druid configuration mapping key pair must not be blank!");
+        Collection<FakeDruidProperties.DataSourceProperties> values = configuration.values();
+        Assert.notEmpty(values, "Druid configuration mapping values must not be empty!");
+        for (FakeDruidProperties.DataSourceProperties dataSourceProperties : values) {
+            Assert.hasText(dataSourceProperties.getUrl(), "DataSourceProperties property 'url' must be set!");
+            Assert.hasText(dataSourceProperties.getDriverClassName(), "DataSourceProperties property 'driverClassName' must be set!");
+            Assert.hasText(dataSourceProperties.getUsername(), "DataSourceProperties property 'username' must be set!");
+            Assert.hasText(dataSourceProperties.getPassword(), "DataSourceProperties property 'password' must be set!");
+        }
+        Assert.isTrue(1L == values.parallelStream().filter(FakeDruidProperties.DataSourceProperties::getPrimary).count(),
+                "Primary druid datasource must be set and only one primary should be set!");
+    }
 
-	private DruidDataSource setUpDruidDataSource(FakeDruidProperties.DataSourceProperties dataSourceProperties) throws Exception {
-		DruidDataSource druidDataSource;
-		if (null != dataSourceProperties.getProperties()) {
-			druidDataSource = (DruidDataSource) DruidDataSourceFactory.createDataSource(dataSourceProperties.getProperties());
-		} else {
-			druidDataSource = new DruidDataSource();
-		}
-		druidDataSource.setUrl(dataSourceProperties.getUrl());
-		druidDataSource.setDriverClassName(dataSourceProperties.getDriverClassName());
-		druidDataSource.setUsername(dataSourceProperties.getUsername());
-		druidDataSource.setPassword(dataSourceProperties.getPassword());
-		return druidDataSource;
-	}
+    @Bean
+    public CompositeHealthIndicator fakeDruidHealthIndicator(FakeRoutingDataSource fakeRoutingDataSource) {
+        Map<String, HealthIndicator> indicators = Maps.newHashMap();
+        for (Map.Entry<String, DruidDataSource> entry : fakeRoutingDataSource.getTargetDataSources().entrySet()) {
+            indicators.put(entry.getKey(), new FakeDruidHealthIndicator(entry.getKey(), entry.getValue()));
+        }
+        return new CompositeHealthIndicator(AggregatorUtils.INSTANCE.getDefaultOrderedHealthAggregator(), indicators);
+    }
 
-	private DataSourceHolder determinePrimaryDruidDataSources(List<DataSourceHolder> dataSourceHolders) {
-		return dataSourceHolders.stream()
-				.filter(DataSourceHolder::getPrimary)
-				.findFirst()
-				.orElseThrow(() -> new IllegalArgumentException("None primary druid datasource has been set!"));
-	}
+    private List<DataSourceHolder> determineTargetDruidDataSources(FakeDruidProperties fakeDruidProperties) throws Exception {
+        List<DataSourceHolder> dataSourceHolders = Lists.newArrayList();
+        for (Map.Entry<String, FakeDruidProperties.DataSourceProperties> propertiesEntry : fakeDruidProperties.getConfiguration().entrySet()) {
+            dataSourceHolders.add(setUpDataSourceHolder(propertiesEntry.getKey(), propertiesEntry.getValue()));
+        }
+        return dataSourceHolders;
+    }
 
-	@Setter
-	@Getter
-	private static class DataSourceHolder {
+    private DataSourceHolder setUpDataSourceHolder(String lookupKey, FakeDruidProperties.DataSourceProperties dataSourceProperties) throws Exception {
+        return new DataSourceHolder.Builder()
+                .setPrimary(dataSourceProperties.getPrimary())
+                .setLookupKey(lookupKey)
+                .setDruidDataSource(setUpDruidDataSource(dataSourceProperties))
+                .build();
+    }
 
-		private final Boolean primary;
-		private final String lookupKey;
-		private final DruidDataSource druidDataSource;
+    private DruidDataSource setUpDruidDataSource(FakeDruidProperties.DataSourceProperties dataSourceProperties) throws Exception {
+        DruidDataSource druidDataSource;
+        if (null != dataSourceProperties.getProperties()) {
+            druidDataSource = (DruidDataSource) DruidDataSourceFactory.createDataSource(dataSourceProperties.getProperties());
+        } else {
+            druidDataSource = new DruidDataSource();
+        }
+        druidDataSource.setUrl(dataSourceProperties.getUrl());
+        druidDataSource.setDriverClassName(dataSourceProperties.getDriverClassName());
+        druidDataSource.setUsername(dataSourceProperties.getUsername());
+        druidDataSource.setPassword(dataSourceProperties.getPassword());
+        return druidDataSource;
+    }
 
-		public DataSourceHolder(Builder builder) {
-			this.primary = builder.primary;
-			this.lookupKey = builder.lookupKey;
-			this.druidDataSource = builder.druidDataSource;
-		}
+    private DataSourceHolder determinePrimaryDruidDataSources(List<DataSourceHolder> dataSourceHolders) {
+        return dataSourceHolders.stream()
+                .filter(DataSourceHolder::getPrimary)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("None primary druid datasource has been set!"));
+    }
 
-		public Boolean getPrimary() {
-			return primary;
-		}
+    @Setter
+    @Getter
+    private static class DataSourceHolder {
 
-		public String getLookupKey() {
-			return lookupKey;
-		}
+        private final Boolean primary;
+        private final String lookupKey;
+        private final DruidDataSource druidDataSource;
 
-		public DruidDataSource getDruidDataSource() {
-			return druidDataSource;
-		}
+        public DataSourceHolder(Builder builder) {
+            this.primary = builder.primary;
+            this.lookupKey = builder.lookupKey;
+            this.druidDataSource = builder.druidDataSource;
+        }
 
-		public static class Builder {
-			private Boolean primary;
-			private String lookupKey;
-			private DruidDataSource druidDataSource;
+        public Boolean getPrimary() {
+            return primary;
+        }
 
-			public Builder setPrimary(Boolean primary) {
-				this.primary = primary;
-				return this;
-			}
+        public String getLookupKey() {
+            return lookupKey;
+        }
 
-			public Builder setLookupKey(String lookupKey) {
-				this.lookupKey = lookupKey;
-				return this;
-			}
+        public DruidDataSource getDruidDataSource() {
+            return druidDataSource;
+        }
 
-			public Builder setDruidDataSource(DruidDataSource druidDataSource) {
-				this.druidDataSource = druidDataSource;
-				return this;
-			}
+        public static class Builder {
+            private Boolean primary;
+            private String lookupKey;
+            private DruidDataSource druidDataSource;
 
-			public DataSourceHolder build() {
-				return new DataSourceHolder(this);
-			}
-		}
-	}
+            public Builder setPrimary(Boolean primary) {
+                this.primary = primary;
+                return this;
+            }
+
+            public Builder setLookupKey(String lookupKey) {
+                this.lookupKey = lookupKey;
+                return this;
+            }
+
+            public Builder setDruidDataSource(DruidDataSource druidDataSource) {
+                this.druidDataSource = druidDataSource;
+                return this;
+            }
+
+            public DataSourceHolder build() {
+                return new DataSourceHolder(this);
+            }
+        }
+    }
 }

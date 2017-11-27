@@ -1,0 +1,14 @@
+{
+  "properties": [
+    {
+      "name": "fake.druid.queues",
+      "type": "java.util.Map<java.lang.String, org.throwable.fake.amqp.FakeAmqpProperties.QueueConfigurationPair>",
+      "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
+    },
+    {
+      "name": "fake.druid.listeners",
+      "type": "java.util.Map<java.lang.String, org.throwable.fake.amqp.FakeAmqpProperties.ListenerConfigurationPair>",
+      "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
+    }
+  ]
+}

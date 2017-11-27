@@ -4,6 +4,41 @@
       "name": "fake.druid.configuration",
       "type": "java.util.Map<java.lang.String, org.throwable.fake.druid.FakeDruidProperties.DataSourceProperties>",
       "sourceType": "org.throwable.fake.druid.FakeDruidProperties"
+    },
+    {
+      "name": "fake.druid.druid-admin-username",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.druid.FakeDruidProperties"
+    },
+    {
+      "name": "fake.druid.druid-admin-password",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.druid.FakeDruidProperties"
+    },
+    {
+      "name": "fake.druid.url-mappings",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.druid.FakeDruidProperties"
+    },
+    {
+      "name": "fake.druid.url-patterns",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.druid.FakeDruidProperties"
+    },
+    {
+      "name": "fake.druid.exclusions",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.druid.FakeDruidProperties"
+    },
+    {
+      "name": "fake.druid.enable-stat-view",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.throwable.fake.druid.FakeDruidProperties"
+    },
+    {
+      "name": "fake.druid.enable-stat-filter",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.throwable.fake.druid.FakeDruidProperties"
     }
   ]
 }

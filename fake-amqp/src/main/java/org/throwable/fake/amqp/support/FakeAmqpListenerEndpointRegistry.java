@@ -130,8 +130,7 @@ public class FakeAmqpListenerEndpointRegistry implements DisposableBean, SmartLi
 	}
 
 	@SuppressWarnings("unchecked")
-	public void registerListenerContainer(RabbitListenerEndpoint endpoint,
-										  RabbitListenerContainerFactory<?> factory,
+	public void registerListenerContainer(RabbitListenerEndpoint endpoint, RabbitListenerContainerFactory<?> factory,
 										  boolean startImmediately) {
 		Assert.notNull(endpoint, "Endpoint must not be null");
 		Assert.notNull(factory, "Factory must not be null");

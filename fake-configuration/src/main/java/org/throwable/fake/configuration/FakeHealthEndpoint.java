@@ -23,7 +23,6 @@ import java.util.Map;
 public class FakeHealthEndpoint extends AbstractEndpoint<Health> implements BeanFactoryAware {
 
 	private DefaultListableBeanFactory beanFactory;
-	private static final String HEALTH_INDICATOR_BEAN_NAME = "fakeCompositeHealthIndicator";
 
 	public FakeHealthEndpoint() {
 		super("fakeHealth", Boolean.FALSE, Boolean.TRUE);

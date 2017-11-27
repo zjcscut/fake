@@ -17,22 +17,29 @@ import java.util.Properties;
 @ConfigurationProperties(prefix = FakeDruidProperties.PREFIX)
 public class FakeDruidProperties {
 
-	public static final String PREFIX = "fake.druid";
+    public static final String PREFIX = "fake.druid";
 
-	private String druidAdminUsername;
-	private String druidAdminPassword;
+    private String druidAdminUsername;
+    private String druidAdminPassword;
+    private String urlMappings;
+    private String urlPatterns;
+    private String exclusions;
+    private Boolean resetEnable = Boolean.FALSE;
 
-	private Map<String, DataSourceProperties> configuration;
+    private Boolean enableStatView = Boolean.TRUE;
+    private Boolean enableStatFilter = Boolean.TRUE;
 
-	@NoArgsConstructor
-	@Data
-	public static class DataSourceProperties {
+    private Map<String, DataSourceProperties> configuration;
 
-		private Boolean primary = Boolean.FALSE;
-		private String url;
-		private String driverClassName;
-		private String username;
-		private String password;
-		private Properties properties;
-	}
+    @NoArgsConstructor
+    @Data
+    public static class DataSourceProperties {
+
+        private Boolean primary = Boolean.FALSE;
+        private String url;
+        private String driverClassName;
+        private String username;
+        private String password;
+        private Properties properties;
+    }
 }
