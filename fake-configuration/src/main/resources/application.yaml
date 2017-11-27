@@ -27,4 +27,6 @@ fake:
             username: root
             properties:
                 filters: stat
+    enable-stat-filter: false
+    enable-stat-view: false
 

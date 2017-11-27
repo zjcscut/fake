@@ -21,6 +21,12 @@ public class FakeAmqpProperties {
     private static final int CONCURRENT_CONSUMERS = 10;
     private static final int MAX_CONCURRENT_CONSUMERS = 20;
 
+    private String host;
+    private Integer port;
+    private String username;
+    private String password;
+    private String virtualHost;
+
     private Map<String, QueueConfigurationPair> queues;
     private Map<String, ListenerConfigurationPair> listeners;
     private Map<String, DlxQueueConfigurationPair> dlx;
@@ -44,6 +50,10 @@ public class FakeAmqpProperties {
         protected Integer concurrentConsumers = CONCURRENT_CONSUMERS;
         protected Integer maxConcurrentConsumers = MAX_CONCURRENT_CONSUMERS;
         protected String listenerClassName;
+		/**
+		 * time(ms) to live
+		 */
+		protected Integer ttl;
     }
 
     @Setter

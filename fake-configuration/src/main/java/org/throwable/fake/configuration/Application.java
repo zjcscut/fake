@@ -7,6 +7,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.bind.PropertySourceUtils;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,6 +40,7 @@ public class Application implements CommandLineRunner {
     public void run(String... args) throws Exception {
         mapper();
         druid();
+        environment();
     }
 
     @Autowired
@@ -45,6 +49,8 @@ public class Application implements CommandLineRunner {
     @Autowired
     private DynamicDataSourceService dynamicDataSourceService;
 
+    @Autowired
+	private ConfigurableEnvironment configurableEnvironment;
 
     private void mapper() {
         Condition condition = Condition.create(User.class);
@@ -59,5 +65,9 @@ public class Application implements CommandLineRunner {
 
     private void druid() {
 		System.out.println(dynamicDataSourceService.getUserByName("doge"));
+	}
+
+	private void environment(){
+		System.out.println(PropertySourceUtils.getSubProperties(configurableEnvironment.getPropertySources(), "fake."));
 	}
 }

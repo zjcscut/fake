@@ -39,7 +39,7 @@ public final class EndpointDescriptorMetadata {
 	}
 
 
-	public static class Builder{
+	public static class Builder {
 
 		private String containerFactoryBeanName;
 		private AcknowledgeMode acknowledgeMode;
@@ -82,7 +82,7 @@ public final class EndpointDescriptorMetadata {
 			return this;
 		}
 
-		public EndpointDescriptorMetadata build(){
+		public EndpointDescriptorMetadata build() {
 			return new EndpointDescriptorMetadata(this);
 		}
 	}
