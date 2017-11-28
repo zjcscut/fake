@@ -51,7 +51,6 @@ public class Condition {
 	@Getter
 	private Map<String, Object> updateColumnMap;
 
-
 	@Getter
 	private LinkedList<CriteriaCollection> criteriaCollection;
 
@@ -77,29 +76,32 @@ public class Condition {
 	}
 
 	public Condition orderBy(String property, String clause) {
-		if (checkMatchColumn(property))
+		if (checkMatchColumn(property)) {
 			sort.addSort(new Order(Direction.fromString(clause), matchColumn(property)));
+		}
 		return this;
 	}
 
 	public Condition desc(String property) {
-		if (checkMatchColumn(property))
+		if (checkMatchColumn(property)) {
 			sort.addSort(new Order(Direction.DESC, matchColumn(property)));
+		}
 		return this;
 	}
 
 	public Condition asc(String property) {
-		if (checkMatchColumn(property))
+		if (checkMatchColumn(property)) {
 			sort.addSort(new Order(Direction.ASC, matchColumn(property)));
+		}
 		return this;
 	}
 
 	public Condition addFieldFilter(FieldFilter fieldFilter) {
-		boolean check = false;
+		boolean pass = false;
 		for (String temp : fieldFilter.accept()) {
-			check = checkMatchColumn(temp);
+			pass = checkMatchColumn(temp);
 		}
-		if (check) {
+		if (pass) {
 			this.fieldFilter = fieldFilter;
 			this.selectColumns = convertFieldFilterToSelectColumns(fieldFilter, entity);
 		}
@@ -112,32 +114,37 @@ public class Condition {
 	}
 
 	public Condition eq(String key, Object value) {
-		if (checkMatchColumn(key))
+		if (checkMatchColumn(key)) {
 			this.criteriaCollection.getLast().addCriteria(new Criteria(matchColumn(key) + CONDITION_CLAUSE_EQ, value));
+		}
 		return this;
 	}
 
 	public Condition gt(String key, Object value) {
-		if (checkMatchColumn(key))
+		if (checkMatchColumn(key)) {
 			this.criteriaCollection.getLast().addCriteria(new Criteria(matchColumn(key) + CONDITION_CLAUSE_GT, value));
+		}
 		return this;
 	}
 
 	public Condition gteq(String key, Object value) {
-		if (checkMatchColumn(key))
+		if (checkMatchColumn(key)) {
 			this.criteriaCollection.getLast().addCriteria(new Criteria(matchColumn(key) + CONDITION_CLAUSE_GTEQ, value));
+		}
 		return this;
 	}
 
 	public Condition lt(String key, Object value) {
-		if (checkMatchColumn(key))
+		if (checkMatchColumn(key)) {
 			this.criteriaCollection.getLast().addCriteria(new Criteria(matchColumn(key) + CONDITION_CLAUSE_LT, value));
+		}
 		return this;
 	}
 
 	public Condition lteq(String key, Object value) {
-		if (checkMatchColumn(key))
+		if (checkMatchColumn(key)) {
 			this.criteriaCollection.getLast().addCriteria(new Criteria(matchColumn(key) + CONDITION_CLAUSE_LTEQ, value));
+		}
 		return this;
 	}
 
@@ -194,8 +201,9 @@ public class Condition {
 	}
 
 	public Condition in(String key, Collection<?> values) {
-		if (checkMatchColumn(key))
+		if (checkMatchColumn(key)) {
 			this.criteriaCollection.getLast().addCriteria(new Criteria(matchColumn(key) + CONDITION_CLAUSE_IN, values));
+		}
 		return this;
 	}
 
@@ -204,8 +212,9 @@ public class Condition {
 	}
 
 	public Condition notIn(String key, Collection<?> values) {
-		if (checkMatchColumn(key))
+		if (checkMatchColumn(key)) {
 			this.criteriaCollection.getLast().addCriteria(new Criteria(matchColumn(key) + CONDITION_CLAUSE_NOT_IN, values));
+		}
 		return this;
 	}
 
@@ -244,8 +253,9 @@ public class Condition {
 	}
 
 	public Condition between(String key, Object leftValue, Object rightValue) {
-		if (checkMatchColumn(key))
+		if (checkMatchColumn(key)) {
 			this.criteriaCollection.getLast().addCriteria(new Criteria(matchColumn(key) + CONDITION_CLAUSE_BETWEEN, leftValue, rightValue));
+		}
 		return this;
 	}
 
@@ -256,8 +266,9 @@ public class Condition {
 	}
 
 	public Condition isNull(String key) {
-		if (checkMatchColumn(key))
+		if (checkMatchColumn(key)) {
 			this.criteriaCollection.getLast().addCriteria(new Criteria(matchColumn(key) + CONDITION_CLAUSE_IS_NULL));
+		}
 		return this;
 	}
 

@@ -26,55 +26,55 @@ import org.throwable.fake.amqp.common.AmqpConstant;
 @Slf4j
 public abstract class FakeAmqpComponentUtils {
 
-    private static final AmqpMessageConverterFactory CONVERTER_FACTORY = new ContentTypeDelegatingConverterFactory();
-    private static final ContentTypeDelegatingMessageConverter CONVERTER;
+	private static final AmqpMessageConverterFactory CONVERTER_FACTORY = new ContentTypeDelegatingConverterFactory();
+	private static final ContentTypeDelegatingMessageConverter CONVERTER;
 
-    static {
-        CONVERTER = (ContentTypeDelegatingMessageConverter) CONVERTER_FACTORY.createMessageConverter();
-        CONVERTER.addDelegate(MediaType.APPLICATION_JSON_VALUE, new Jackson2JsonMessageConverter());
-        CONVERTER.addDelegate(MediaType.APPLICATION_JSON_UTF8_VALUE, new Jackson2JsonMessageConverter());
-    }
+	static {
+		CONVERTER = (ContentTypeDelegatingMessageConverter) CONVERTER_FACTORY.createMessageConverter();
+		CONVERTER.addDelegate(MediaType.APPLICATION_JSON_VALUE, new Jackson2JsonMessageConverter());
+		CONVERTER.addDelegate(MediaType.APPLICATION_JSON_UTF8_VALUE, new Jackson2JsonMessageConverter());
+	}
 
 
-    public static CachingConnectionFactory getExistingCachingConnectionFactory(BeanFactory beanFactory) {
-        try {
-            return beanFactory.getBean(CachingConnectionFactory.class);
-        } catch (NoSuchBeanDefinitionException ex) {
-            throw new BeanInitializationException("No " + CachingConnectionFactory.class.getSimpleName() +
-                    " was found in the spring application context", ex);
-        }
-    }
+	public static CachingConnectionFactory getExistingCachingConnectionFactory(BeanFactory beanFactory) {
+		try {
+			return beanFactory.getBean(AmqpConstant.AMQP_RABBIT_CACHING_CONNECTION_FACTORY_BEAN_NAME, CachingConnectionFactory.class);
+		} catch (NoSuchBeanDefinitionException ex) {
+			throw new BeanInitializationException("No " + CachingConnectionFactory.class.getSimpleName() +
+					" was found in the spring application context", ex);
+		}
+	}
 
-    public static RabbitAdmin getExistingRabbitAdmin(BeanFactory beanFactory) {
-        try {
-            return beanFactory.getBean(RabbitAdmin.class);
-        } catch (NoSuchBeanDefinitionException ex) {
-            throw new BeanInitializationException("No " + RabbitAdmin.class.getSimpleName() +
-                    " was found in the spring application context", ex);
-        }
-    }
+	public static RabbitAdmin getExistingRabbitAdmin(BeanFactory beanFactory) {
+		try {
+			return beanFactory.getBean(AmqpConstant.AMQP_RABBIT_ADMIN_BEAN_NAME, RabbitAdmin.class);
+		} catch (NoSuchBeanDefinitionException ex) {
+			throw new BeanInitializationException("No " + RabbitAdmin.class.getSimpleName() +
+					" was found in the spring application context", ex);
+		}
+	}
 
-    public static SimpleRabbitListenerContainerFactory getExistingRabbitListenerContainerFactory(BeanFactory beanFactory) {
-        Assert.isTrue(beanFactory instanceof DefaultListableBeanFactory, "BeanFactory instance must be DefaultListableBeanFactory!");
-        String containerFactoryBeanName = AmqpConstant.AMQP_CONTAINER_FACTORY_BEAN_NAME;
-        SimpleRabbitListenerContainerFactory containerFactory;
-        if (!beanFactory.containsBean(containerFactoryBeanName)) {
-            CachingConnectionFactory connectionFactory = getExistingCachingConnectionFactory(beanFactory);
-            SimpleRabbitListenerContainerFactoryConfigurer factoryConfigurer
-                    = beanFactory.getBean(SimpleRabbitListenerContainerFactoryConfigurer.class);
-            containerFactory = new SimpleRabbitListenerContainerFactory();
-            factoryConfigurer.configure(containerFactory, connectionFactory);
-            containerFactory.setConnectionFactory(connectionFactory);
-            containerFactory.setAcknowledgeMode(AcknowledgeMode.NONE);
-            containerFactory.setMessageConverter(CONVERTER);
-            ((DefaultListableBeanFactory) beanFactory).registerSingleton(containerFactoryBeanName, containerFactory);
-        } else {
-            containerFactory = beanFactory.getBean(containerFactoryBeanName, SimpleRabbitListenerContainerFactory.class);
-        }
-        return containerFactory;
-    }
+	public static SimpleRabbitListenerContainerFactory getExistingRabbitListenerContainerFactory(BeanFactory beanFactory) {
+		Assert.isTrue(beanFactory instanceof DefaultListableBeanFactory, "BeanFactory instance must be DefaultListableBeanFactory!");
+		String containerFactoryBeanName = AmqpConstant.AMQP_CONTAINER_FACTORY_BEAN_NAME;
+		SimpleRabbitListenerContainerFactory containerFactory;
+		if (!beanFactory.containsBean(containerFactoryBeanName)) {
+			CachingConnectionFactory connectionFactory = getExistingCachingConnectionFactory(beanFactory);
+			SimpleRabbitListenerContainerFactoryConfigurer factoryConfigurer
+					= beanFactory.getBean(SimpleRabbitListenerContainerFactoryConfigurer.class);
+			containerFactory = new SimpleRabbitListenerContainerFactory();
+			factoryConfigurer.configure(containerFactory, connectionFactory);
+			containerFactory.setConnectionFactory(connectionFactory);
+			containerFactory.setAcknowledgeMode(AcknowledgeMode.NONE);
+			containerFactory.setMessageConverter(CONVERTER);
+			((DefaultListableBeanFactory) beanFactory).registerSingleton(containerFactoryBeanName, containerFactory);
+		} else {
+			containerFactory = beanFactory.getBean(containerFactoryBeanName, SimpleRabbitListenerContainerFactory.class);
+		}
+		return containerFactory;
+	}
 
-    public static MessageConverter getContentTypeDelegatingMessageConverter() {
-        return CONVERTER;
-    }
+	public static MessageConverter getContentTypeDelegatingMessageConverter() {
+		return CONVERTER;
+	}
 }

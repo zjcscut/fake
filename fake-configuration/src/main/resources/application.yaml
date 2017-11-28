@@ -1,3 +1,4 @@
+
 spring:
   rabbitmq:
     host: localhost
@@ -29,4 +30,21 @@ fake:
                 filters: stat
     enable-stat-filter: false
     enable-stat-view: false
-
+  amqp:
+    host: localhost
+    port: 5672
+    virtual-host: "/"
+    username: guest
+    password: guest
+    listeners:
+         doge-liestener:
+                 queueName: doge-queue
+                 exchangeName: doge-queue
+                 exchangeType: direct
+                 routingKey: doge-queue
+                 group: doge
+                 acknowledgeMode: none
+                 listenerClassName: org.throwable.fake.configuration.amqp.DogeListener
+management:
+  security:
+    enabled: false

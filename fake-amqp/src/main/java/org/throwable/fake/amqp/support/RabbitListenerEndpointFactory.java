@@ -7,7 +7,6 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author throwable
@@ -17,20 +16,17 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class RabbitListenerEndpointFactory {
 
-    private final AtomicInteger counter = new AtomicInteger();
-
-
     private RabbitListenerEndpointFactory() {
         throw new IllegalAccessError();
     }
 
 
     public static MultiMethodRabbitListenerEndpoint buildMultiMethodRabbitListenerEndpoint(){
-
+       return null;
     }
 
     public static MethodRabbitListenerEndpoint buildMethodRabbitListenerEndpoint(){
-
+		return null;
     }
 
     private Method checkMethodProxyAndReturn(Method method, Object bean) {

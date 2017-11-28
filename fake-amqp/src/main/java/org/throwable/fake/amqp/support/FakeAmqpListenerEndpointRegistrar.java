@@ -88,6 +88,18 @@ public class FakeAmqpListenerEndpointRegistrar implements BeanFactoryAware, Init
 		}
 	}
 
+	public void registerMessageListenerContainer(MessageListenerContainerMetadata metadata){
+		Assert.notNull(metadata, "MessageListenerContainerMetadata must be set!");
+		Assert.notNull(metadata.getId(), "Id of metadata  must be set!");
+		Assert.notNull(metadata.getGroup(), "Group of metadata must be set!");
+		if (!registeredEndpointIds.contains(metadata.getId())) {
+			synchronized (this.registeredEndpointIds){
+				this.endpointRegistry.registerListenerContainer(metadata);
+				registeredEndpointIds.add(metadata.getId());
+			}
+		}
+	}
+
 	private RabbitListenerContainerFactory<?> resolveContainerFactory(AmqpListenerEndpointDescriptor descriptor) {
 		EndpointDescriptorMetadata metadata = descriptor.getMetadata();
 		Assert.state(this.beanFactory != null, "BeanFactory must be set to obtain container factory by bean name");

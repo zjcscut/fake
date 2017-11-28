@@ -1,13 +1,43 @@
 {
   "properties": [
     {
-      "name": "fake.druid.queues",
+      "name": "fake.amqp.queues",
       "type": "java.util.Map<java.lang.String, org.throwable.fake.amqp.FakeAmqpProperties.QueueConfigurationPair>",
       "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
     },
     {
-      "name": "fake.druid.listeners",
+      "name": "fake.amqp.listeners",
       "type": "java.util.Map<java.lang.String, org.throwable.fake.amqp.FakeAmqpProperties.ListenerConfigurationPair>",
+      "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
+    },
+    {
+      "name": "fake.amqp.dlx",
+      "type": "java.util.Map<java.lang.String, org.throwable.fake.amqp.FakeAmqpProperties.DlxQueueConfigurationPair>",
+      "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
+    },
+    {
+      "name": "fake.amqp.host",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
+    },
+    {
+      "name": "fake.amqp.port",
+      "type": "java.lang.Integer",
+      "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
+    },
+    {
+      "name": "fake.amqp.username",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
+    },
+    {
+      "name": "fake.amqp.password",
+      "type": "java.lang.String",
+      "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
+    },
+    {
+      "name": "fake.amqp.virtual-host",
+      "type": "java.lang.String",
       "sourceType": "org.throwable.fake.amqp.FakeAmqpProperties"
     }
   ]

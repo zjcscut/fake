@@ -25,7 +25,7 @@ public class FakeHealthEndpoint extends AbstractEndpoint<Health> implements Bean
 	private DefaultListableBeanFactory beanFactory;
 
 	public FakeHealthEndpoint() {
-		super("fakeHealth", Boolean.FALSE, Boolean.TRUE);
+		super("fakeHealth", Boolean.TRUE, Boolean.TRUE);
 	}
 
 	@Override
