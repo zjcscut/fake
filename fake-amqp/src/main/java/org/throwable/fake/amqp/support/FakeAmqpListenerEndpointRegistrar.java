@@ -38,7 +38,7 @@ public class FakeAmqpListenerEndpointRegistrar implements BeanFactoryAware, Init
 
 	@Override
 	public void afterPropertiesSet() {
-		registerAllEndpoints();
+
 	}
 
 	public FakeAmqpListenerEndpointRegistry getEndpointRegistry() {
@@ -57,7 +57,7 @@ public class FakeAmqpListenerEndpointRegistrar implements BeanFactoryAware, Init
 		this.messageHandlerMethodFactory = messageHandlerMethodFactory;
 	}
 
-	protected void registerAllEndpoints() {
+	public void registerAllEndpoints() {
 		synchronized (this.endpointDescriptors) {
 			for (AmqpListenerEndpointDescriptor descriptor : this.endpointDescriptors) {
 				RabbitListenerEndpoint endpoint = descriptor.getEndpoint();

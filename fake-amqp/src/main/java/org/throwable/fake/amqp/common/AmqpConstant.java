@@ -17,4 +17,12 @@ public class AmqpConstant {
 	public static final String AMQP_CONTAINER_FACTORY_BEAN_NAME = "fakeAmqpListenerContainerFactory";
 
 	public static final String AMQP_DECLARER_BEAN_NAME = "fakeAmqpComponentDeclarer";
+
+	public static final String AMQP_HANDLER_METHOD_FACTORY_ADAPTER_BEAN_NAME = "fakeAmqpHandlerMethodFactoryAdapter";
+
+	public static final String BEAN_EXPRESSION_RESOLVER_DELEGATOR_BEAN_NAME = "beanExpressionResolverDelegator";
+
+	public static final String AMQP_COMPONENT_REGISTRAR_BEAN_NAME = "fakeAmqpComponentRegistrar";
+
+	public static final String AMQP_LISTENER_ENDPOINT_ID_PREFIX = "org.springframework.amqp.rabbit.RabbitListenerEndpointContainer";
 }

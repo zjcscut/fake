@@ -46,14 +46,12 @@ public class FakeAmqpProperties {
     @Getter
     public static class ListenerConfigurationPair extends QueueConfigurationPair {
 
+        protected String group;
         protected String acknowledgeMode;
         protected Integer concurrentConsumers = CONCURRENT_CONSUMERS;
         protected Integer maxConcurrentConsumers = MAX_CONCURRENT_CONSUMERS;
         protected String listenerClassName;
-		/**
-		 * time(ms) to live
-		 */
-		protected Integer ttl;
+
     }
 
     @Setter
@@ -63,5 +61,9 @@ public class FakeAmqpProperties {
         protected String dlxQueue;
         protected String dlxExchange;
         protected String dlxRoutingKey;
+        /**
+         * time(ms) to live
+         */
+        protected Integer ttl;
     }
 }

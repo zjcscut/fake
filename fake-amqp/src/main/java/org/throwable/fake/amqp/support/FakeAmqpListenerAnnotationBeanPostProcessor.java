@@ -16,22 +16,16 @@ import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.*;
-import org.springframework.beans.factory.config.BeanExpressionContext;
-import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.autoconfigure.amqp.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.context.EnvironmentAware;
-import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
-import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
-import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
-import org.springframework.messaging.handler.invocation.InvocableHandlerMethod;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
@@ -55,8 +49,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 public class FakeAmqpListenerAnnotationBeanPostProcessor
-        implements BeanFactoryAware, BeanClassLoaderAware, BeanPostProcessor, EnvironmentAware,
-        Ordered, SmartInitializingSingleton {
+        implements BeanFactoryAware, BeanClassLoaderAware, BeanPostProcessor, EnvironmentAware, Ordered,
+        SmartInitializingSingleton {
 
     private static final String DEFAULT_RABBIT_ADMIN_BEAN_NAME = "rabbitAdmin";
     public static final String EMPTY_STRING_ARGUMENTS_PROPERTY = "fake.amqp.emptyStringArguments";
@@ -65,15 +59,14 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
     private static final ContentTypeDelegatingMessageConverter CONVERTER;
     private DefaultListableBeanFactory beanFactory;
     private ClassLoader beanClassLoader;
-    private BeanExpressionResolver resolver = new StandardBeanExpressionResolver();
-    private BeanExpressionContext expressionContext;
     private final Set<String> emptyStringArguments = new HashSet<>();
     private ConversionService conversionService = new DefaultConversionService();
-    private final AmqpHandlerMethodFactoryAdapter methodFactoryAdapter = new AmqpHandlerMethodFactoryAdapter();
-    private final FakeAmqpListenerEndpointRegistrar registrar = new FakeAmqpListenerEndpointRegistrar();
+    private FakeAmqpListenerEndpointRegistrar registrar;
     private final ConcurrentMap<Class<?>, TypeMetadata> typeCache = new ConcurrentHashMap<>();
-    private FakeAmqpListenerEndpointRegistry endpointRegistry;
     private final AtomicInteger counter = new AtomicInteger();
+
+    private BeanExpressionResolverDelegator beanExpressionResolverDelegator;
+    private FakeAmqpHandlerMethodFactoryAdapter fakeAmqpHandlerMethodFactoryAdapter;
 
     static {
         CONVERTER = (ContentTypeDelegatingMessageConverter) CONVERTER_FACTORY.createMessageConverter();
@@ -93,9 +86,7 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = (DefaultListableBeanFactory) beanFactory;
-        this.resolver = this.beanFactory.getBeanExpressionResolver();
-        this.expressionContext = new BeanExpressionContext(this.beanFactory, null);
-        prepareEndpointRegistrar();
+        prepareNecessaryComponents();
     }
 
     @Override
@@ -106,17 +97,9 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
         }
     }
 
-    public FakeAmqpListenerEndpointRegistry getEndpointRegistry() {
-        return endpointRegistry;
-    }
-
-    public void setEndpointRegistry(FakeAmqpListenerEndpointRegistry endpointRegistry) {
-        this.endpointRegistry = endpointRegistry;
-    }
 
     @Override
     public void afterSingletonsInstantiated() {
-        this.registrar.afterPropertiesSet();
         this.typeCache.clear();
     }
 
@@ -150,25 +133,15 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
         return Ordered.LOWEST_PRECEDENCE;
     }
 
-    private void prepareEndpointRegistrar() {
-        Assert.state(null != this.beanFactory, "BeanFactory must be set to find endpoint registry by bean name");
-        this.registrar.setBeanFactory(this.beanFactory);
-        Map<String, FakeAmqpListenerConfigurer> configurerMap = this.beanFactory.getBeansOfType(FakeAmqpListenerConfigurer.class);
-        if (null != configurerMap && !configurerMap.isEmpty()) {
-            for (FakeAmqpListenerConfigurer configurer : configurerMap.values()) {
-                configurer.configureRabbitListeners(this.registrar);
-            }
-        }
-        if (null == this.registrar.getEndpointRegistry()) {
-            this.endpointRegistry = this.beanFactory.getBean(AmqpConstant.AMQP_ENDPOINT_REGISTRY_BEAN_NAME,
-                    FakeAmqpListenerEndpointRegistry.class);
-            this.registrar.setEndpointRegistry(this.endpointRegistry);
-        }
-        MessageHandlerMethodFactory handlerMethodFactory = this.registrar.getMessageHandlerMethodFactory();
-        if (handlerMethodFactory != null) {
-            this.methodFactoryAdapter.setMessageHandlerMethodFactory(handlerMethodFactory);
-        }
+    private void prepareNecessaryComponents() {
+        this.beanExpressionResolverDelegator
+                = beanFactory.getBean(AmqpConstant.BEAN_EXPRESSION_RESOLVER_DELEGATOR_BEAN_NAME, BeanExpressionResolverDelegator.class);
+        this.fakeAmqpHandlerMethodFactoryAdapter
+                = beanFactory.getBean(AmqpConstant.AMQP_HANDLER_METHOD_FACTORY_ADAPTER_BEAN_NAME, FakeAmqpHandlerMethodFactoryAdapter.class);
+        this.registrar
+                = beanFactory.getBean(AmqpConstant.AMQP_ENDPOINT_REGISTRAR_BEAN_NAME, FakeAmqpListenerEndpointRegistrar.class);
     }
+
 
     private void processAmqpListeners(FakeAmqpListener fakeAmqpListener,
                                       Method method,
@@ -206,7 +179,7 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
         RabbitAdmin rabbitAdmin = getRabbitAdminBeanFromContext(fakeAmqpListener, targetClass);
         endpoint.setBean(bean);
         endpoint.setId(resolveEndpointId(fakeAmqpListener));
-        endpoint.setMessageHandlerMethodFactory(this.methodFactoryAdapter);
+        endpoint.setMessageHandlerMethodFactory(this.fakeAmqpHandlerMethodFactoryAdapter);
         endpoint.setQueueNames(resolveQueues(fakeAmqpListener, rabbitAdmin));
         endpoint.setGroup(resolveEndpointGroup(fakeAmqpListener));
         endpoint.setExclusive(fakeAmqpListener.exclusive());
@@ -279,7 +252,7 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
     private String resolveRabbitAdminBeanName(FakeAmqpListener fakeAmqpListener) {
         String rabbitAdminBeanName = fakeAmqpListener.rabbitAdmin();
         if (StringUtils.hasText(rabbitAdminBeanName)) {
-            rabbitAdminBeanName = resolveExpressionAsString(rabbitAdminBeanName, "@FakeAmqpListener.rabbitAdmin");
+            rabbitAdminBeanName = beanExpressionResolverDelegator.resolveExpressionAsString(rabbitAdminBeanName, "@FakeAmqpListener.rabbitAdmin");
         }
         if (!StringUtils.hasText(rabbitAdminBeanName)) {
             rabbitAdminBeanName = DEFAULT_RABBIT_ADMIN_BEAN_NAME;
@@ -331,14 +304,14 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
 
     private String resolveEndpointId(FakeAmqpListener fakeAmqpListener) {
         if (StringUtils.hasText(fakeAmqpListener.id())) {
-            return resolve(fakeAmqpListener.id());
+            return beanExpressionResolverDelegator.resolve(fakeAmqpListener.id());
         } else {
             return "org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#" + this.counter.getAndIncrement();
         }
     }
 
     private Integer resolvePriority(FakeAmqpListener fakeAmqpListener) {
-        String priority = resolve(fakeAmqpListener.priority());
+        String priority = beanExpressionResolverDelegator.resolve(fakeAmqpListener.priority());
         if (StringUtils.hasText(priority)) {
             try {
                 return Integer.valueOf(priority);
@@ -352,7 +325,7 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
 
     private String resolveEndpointGroup(FakeAmqpListener fakeAmqpListener) {
         if (StringUtils.hasText(fakeAmqpListener.group())) {
-            Object resolvedGroup = resolveExpression(fakeAmqpListener.group());
+            Object resolvedGroup = beanExpressionResolverDelegator.resolveExpression(fakeAmqpListener.group());
             if (resolvedGroup instanceof String) {
                 return (String) resolvedGroup;
             }
@@ -370,7 +343,7 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
         List<String> result = new ArrayList<>();
         if (queues.length > 0) {
             for (String queue : queues) {
-                Object resolvedValue = resolveExpression(queue);
+                Object resolvedValue = beanExpressionResolverDelegator.resolveExpression(queue);
                 resolveAsString(resolvedValue, result);
             }
             if (fakeAmqpListener.autoDeclare()) {
@@ -418,29 +391,29 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
                                                RabbitAdmin rabbitAdmin,
                                                boolean autoDeclare) {
         org.springframework.amqp.rabbit.annotation.Queue bindingQueue = binding.value();
-        String queueName = (String) resolveExpression(bindingQueue.value());
+        String queueName = (String) beanExpressionResolverDelegator.resolveExpression(bindingQueue.value());
         boolean exclusive = false;
         boolean autoDelete = false;
         if (!StringUtils.hasText(queueName)) {
             queueName = UUID.randomUUID().toString();
             if (!StringUtils.hasText(bindingQueue.exclusive())
-                    || resolveExpressionAsBoolean(bindingQueue.exclusive())) {
+                    || beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingQueue.exclusive())) {
                 exclusive = true;
             }
             if (!StringUtils.hasText(bindingQueue.autoDelete())
-                    || resolveExpressionAsBoolean(bindingQueue.autoDelete())) {
+                    || beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingQueue.autoDelete())) {
                 autoDelete = true;
             }
         } else {
-            exclusive = resolveExpressionAsBoolean(bindingQueue.exclusive());
-            autoDelete = resolveExpressionAsBoolean(bindingQueue.autoDelete());
+            exclusive = beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingQueue.exclusive());
+            autoDelete = beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingQueue.autoDelete());
         }
         org.springframework.amqp.core.Queue queue = new org.springframework.amqp.core.Queue(queueName,
-                resolveExpressionAsBoolean(bindingQueue.durable()),
+                beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingQueue.durable()),
                 exclusive,
                 autoDelete,
                 resolveArguments(bindingQueue.arguments()));
-        queue.setIgnoreDeclarationExceptions(resolveExpressionAsBoolean(bindingQueue.ignoreDeclarationExceptions()));
+        queue.setIgnoreDeclarationExceptions(beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingQueue.ignoreDeclarationExceptions()));
         if (autoDeclare) {
             rabbitAdmin.declareQueue(queue);
         }
@@ -452,9 +425,9 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
                                            RabbitAdmin rabbitAdmin,
                                            boolean autoDeclare) {
         org.springframework.amqp.rabbit.annotation.Exchange bindingExchange = binding.exchange();
-        String exchangeName = resolveExpressionAsString(bindingExchange.value(), "@Exchange.exchange");
-        String exchangeType = resolveExpressionAsString(bindingExchange.type(), "@Exchange.type");
-        String routingKey = resolveExpressionAsString(binding.key(), "@QueueBinding.key");
+        String exchangeName = beanExpressionResolverDelegator.resolveExpressionAsString(bindingExchange.value(), "@Exchange.exchange");
+        String exchangeType = beanExpressionResolverDelegator.resolveExpressionAsString(bindingExchange.type(), "@Exchange.type");
+        String routingKey = beanExpressionResolverDelegator.resolveExpressionAsString(binding.key(), "@QueueBinding.key");
         Exchange exchange;
         Binding actualBinding;
         if (exchangeType.equals(ExchangeTypes.DIRECT)) {
@@ -477,10 +450,10 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
             throw new BeanInitializationException("Unexpected exchange type: " + exchangeType);
         }
         AbstractExchange abstractExchange = (AbstractExchange) exchange;
-        abstractExchange.setInternal(resolveExpressionAsBoolean(bindingExchange.internal()));
-        abstractExchange.setDelayed(resolveExpressionAsBoolean(bindingExchange.delayed()));
-        abstractExchange.setIgnoreDeclarationExceptions(resolveExpressionAsBoolean(bindingExchange.ignoreDeclarationExceptions()));
-        actualBinding.setIgnoreDeclarationExceptions(resolveExpressionAsBoolean(binding.ignoreDeclarationExceptions()));
+        abstractExchange.setInternal(beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.internal()));
+        abstractExchange.setDelayed(beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.delayed()));
+        abstractExchange.setIgnoreDeclarationExceptions(beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.ignoreDeclarationExceptions()));
+        actualBinding.setIgnoreDeclarationExceptions(beanExpressionResolverDelegator.resolveExpressionAsBoolean(binding.ignoreDeclarationExceptions()));
         if (autoDeclare) {
             rabbitAdmin.declareExchange(abstractExchange);
             rabbitAdmin.declareBinding(actualBinding);
@@ -490,42 +463,42 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
     private Exchange directExchange(org.springframework.amqp.rabbit.annotation.Exchange bindingExchange,
                                     String exchangeName) {
         return new DirectExchange(exchangeName,
-                resolveExpressionAsBoolean(bindingExchange.durable()),
-                resolveExpressionAsBoolean(bindingExchange.autoDelete()),
+                beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.durable()),
+                beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.autoDelete()),
                 resolveArguments(bindingExchange.arguments()));
     }
 
     private Exchange fanoutExchange(org.springframework.amqp.rabbit.annotation.Exchange bindingExchange,
                                     String exchangeName) {
         return new FanoutExchange(exchangeName,
-                resolveExpressionAsBoolean(bindingExchange.durable()),
-                resolveExpressionAsBoolean(bindingExchange.autoDelete()),
+                beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.durable()),
+                beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.autoDelete()),
                 resolveArguments(bindingExchange.arguments()));
     }
 
     private Exchange topicExchange(org.springframework.amqp.rabbit.annotation.Exchange bindingExchange,
                                    String exchangeName) {
         return new TopicExchange(exchangeName,
-                resolveExpressionAsBoolean(bindingExchange.durable()),
-                resolveExpressionAsBoolean(bindingExchange.autoDelete()),
+                beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.durable()),
+                beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.autoDelete()),
                 resolveArguments(bindingExchange.arguments()));
     }
 
     private Exchange headersExchange(org.springframework.amqp.rabbit.annotation.Exchange bindingExchange,
                                      String exchangeName) {
         return new HeadersExchange(exchangeName,
-                resolveExpressionAsBoolean(bindingExchange.durable()),
-                resolveExpressionAsBoolean(bindingExchange.autoDelete()),
+                beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.durable()),
+                beanExpressionResolverDelegator.resolveExpressionAsBoolean(bindingExchange.autoDelete()),
                 resolveArguments(bindingExchange.arguments()));
     }
 
     private Map<String, Object> resolveArguments(Argument[] arguments) {
         Map<String, Object> map = new HashMap<>();
         for (Argument arg : arguments) {
-            String key = resolveExpressionAsString(arg.name(), "@Argument.name");
+            String key = beanExpressionResolverDelegator.resolveExpressionAsString(arg.name(), "@Argument.name");
             if (StringUtils.hasText(key)) {
-                Object value = resolveExpression(arg.value());
-                Object type = resolveExpression(arg.type());
+                Object value = beanExpressionResolverDelegator.resolveExpression(arg.value());
+                Object type = beanExpressionResolverDelegator.resolveExpression(arg.type());
                 Class<?> typeClass;
                 String typeName;
                 if (type instanceof Class) {
@@ -577,70 +550,6 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
             map.put(key, "");
         } else {
             map.put(key, null);
-        }
-    }
-
-    private boolean resolveExpressionAsBoolean(String value) {
-        Object resolved = resolveExpression(value);
-        if (resolved instanceof Boolean) {
-            return (Boolean) resolved;
-        } else if (resolved instanceof String) {
-            return Boolean.valueOf((String) resolved);
-        } else {
-            return false;
-        }
-    }
-
-    private String resolveExpressionAsString(String value, String attribute) {
-        Object resolved = resolveExpression(value);
-        if (resolved instanceof String) {
-            return (String) resolved;
-        } else {
-            throw new IllegalStateException("The [" + attribute + "] must resolve to a String. "
-                    + "Resolved to [" + resolved.getClass() + "] for [" + value + "]");
-        }
-    }
-
-    private Object resolveExpression(String value) {
-        String resolvedValue = resolve(value);
-        if (!(resolvedValue.startsWith("#{") && value.endsWith("}"))) {
-            return resolvedValue;
-        }
-        return this.resolver.evaluate(resolvedValue, this.expressionContext);
-    }
-
-    private String resolve(String value) {
-        if (this.beanFactory != null) {
-            return this.beanFactory.resolveEmbeddedValue(value);
-        }
-        return value;
-    }
-
-    private class AmqpHandlerMethodFactoryAdapter implements MessageHandlerMethodFactory {
-
-        private MessageHandlerMethodFactory messageHandlerMethodFactory;
-
-        public void setMessageHandlerMethodFactory(MessageHandlerMethodFactory rabbitHandlerMethodFactory1) {
-            this.messageHandlerMethodFactory = rabbitHandlerMethodFactory1;
-        }
-
-        @Override
-        public InvocableHandlerMethod createInvocableHandlerMethod(Object bean, Method method) {
-            return getMessageHandlerMethodFactory().createInvocableHandlerMethod(bean, method);
-        }
-
-        private MessageHandlerMethodFactory getMessageHandlerMethodFactory() {
-            if (this.messageHandlerMethodFactory == null) {
-                this.messageHandlerMethodFactory = createDefaultMessageHandlerMethodFactory();
-            }
-            return this.messageHandlerMethodFactory;
-        }
-
-        private MessageHandlerMethodFactory createDefaultMessageHandlerMethodFactory() {
-            DefaultMessageHandlerMethodFactory defaultFactory = new DefaultMessageHandlerMethodFactory();
-            defaultFactory.setBeanFactory(FakeAmqpListenerAnnotationBeanPostProcessor.this.beanFactory);
-            defaultFactory.afterPropertiesSet();
-            return defaultFactory;
         }
     }
 

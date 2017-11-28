@@ -69,6 +69,7 @@ public class ListenerDeclarationMetadata extends DeclarationMetadata {
 			return this;
 		}
 
+		@Override
 		public ListenerDeclarationMetadata build() {
 			return new ListenerDeclarationMetadata(this);
 		}

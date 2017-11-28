@@ -21,156 +21,183 @@ import java.util.Map;
 @Slf4j
 public final class FakeAmqpComponentDeclarer implements BeanFactoryAware {
 
-	private static final Boolean DEFAULT_DURABLE = Boolean.TRUE;
-	private static final Boolean DEFAULT_AUTO_DELETE = Boolean.FALSE;
-	private static final Boolean DEFAULT_EXCLUSIVE = Boolean.FALSE;
-	private static final String EMPTY = "";
-	private static final String DLX_EXCHANGE_KEY = "x-dead-letter-exchange";
-	private static final String DLX_ROUTING_KEY_KEY = "x-dead-letter-routing-key";
-	private static final String DLX_TTL_KEY = "x-message-ttl";
+    private static final Boolean DEFAULT_DURABLE = Boolean.TRUE;
+    private static final Boolean DEFAULT_AUTO_DELETE = Boolean.FALSE;
+    private static final Boolean DEFAULT_EXCLUSIVE = Boolean.FALSE;
+    private static final String EMPTY = "";
+    private static final String DLX_EXCHANGE_KEY = "x-dead-letter-exchange";
+    private static final String DLX_ROUTING_KEY_KEY = "x-dead-letter-routing-key";
+    private static final String DLX_TTL_KEY = "x-message-ttl";
 
-	private final RabbitAdmin rabbitAdmin;
-	private final RabbitTemplate rabbitTemplate;
-	private BeanExpressionResolverDelegator beanExpressionResolverDelegator;
+    private final RabbitAdmin rabbitAdmin;
+    private final RabbitTemplate rabbitTemplate;
+    private BeanExpressionResolverDelegator beanExpressionResolverDelegator;
 
-	public FakeAmqpComponentDeclarer(RabbitAdmin rabbitAdmin, RabbitTemplate rabbitTemplate) {
-		this.rabbitAdmin = rabbitAdmin;
-		this.rabbitTemplate = rabbitTemplate;
-	}
+    public FakeAmqpComponentDeclarer(RabbitAdmin rabbitAdmin, RabbitTemplate rabbitTemplate) {
+        this.rabbitAdmin = rabbitAdmin;
+        this.rabbitTemplate = rabbitTemplate;
+    }
 
-	@Override
-	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-		this.beanExpressionResolverDelegator = beanFactory.getBean(BeanExpressionResolverDelegator.class);
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanExpressionResolverDelegator = beanFactory.getBean(BeanExpressionResolverDelegator.class);
 
-	}
+    }
 
-	public boolean queueDeclarePassive(String queueName) {
-		try {
-			return rabbitTemplate.execute(channel -> {
-				channel.queueDeclarePassive(queueName);
-				return Boolean.TRUE;
-			});
-		} catch (Exception e) {
-			//ignore
-		}
-		return Boolean.FALSE;
-	}
+    public boolean queueDeclarePassive(String queueName) {
+        try {
+            return rabbitTemplate.execute(channel -> {
+                channel.queueDeclarePassive(queueName);
+                return Boolean.TRUE;
+            });
+        } catch (Exception e) {
+            //ignore
+        }
+        return Boolean.FALSE;
+    }
 
-	public void declareDlxBinding(DlxDeclarationMetadata dlxDeclarationMetadata) {
-		Assert.hasText(dlxDeclarationMetadata.getQueueName(), "QueueName must be set!");
-		Assert.hasText(dlxDeclarationMetadata.getExchangeType(), "ExchangeType must be set!");
-		if (null == dlxDeclarationMetadata.getExchange()) {
-			dlxDeclarationMetadata.setExchange(dlxDeclarationMetadata.getQueueName());
-		}
-		if (null == dlxDeclarationMetadata.getExchangeType()) {
-			dlxDeclarationMetadata.setExchangeType(ExchangeTypes.DIRECT);
-		}
-		Assert.hasText(dlxDeclarationMetadata.getDlxExchange(), "DlxExchange must be set!");
-		Assert.hasText(dlxDeclarationMetadata.getDlxRoutingKey(), "DlxRoutingKey must be set!");
-		Assert.notNull(dlxDeclarationMetadata.getDlxQueue(), "DlxQueue must be set!");
-		Assert.notNull(dlxDeclarationMetadata.getTtl(), "Ttl must be set!");
-		Map<String, Object> arguments = dlxDeclarationMetadata.getArguments();
-		if (null == arguments) {
-			arguments = Maps.newHashMap();
-		}
-		arguments.put(DLX_EXCHANGE_KEY, dlxDeclarationMetadata.getDlxExchange());
-		arguments.put(DLX_ROUTING_KEY_KEY, dlxDeclarationMetadata.getDlxRoutingKey());
-		arguments.put(DLX_TTL_KEY, dlxDeclarationMetadata.getTtl());
-		//declare dlx queue
-		DirectExchange dlxExchange = new DirectExchange(dlxDeclarationMetadata.getDlxExchange());
-		rabbitAdmin.declareExchange(dlxExchange);
-		Queue dlxQueue = new Queue(dlxDeclarationMetadata.getDlxQueue(), DEFAULT_DURABLE, DEFAULT_EXCLUSIVE,
-				DEFAULT_AUTO_DELETE, null);
-		rabbitAdmin.declareQueue(dlxQueue);
-		rabbitAdmin.declareBinding(BindingBuilder.bind(dlxQueue).to(dlxExchange).with(dlxDeclarationMetadata.getDlxRoutingKey()));
-		//declare target queue
-		declareBinding(dlxDeclarationMetadata);
-		log.info("Declare dlx queue for queueName {},source queue for queueName {}", dlxQueue.getName(), dlxDeclarationMetadata.getQueueName());
-	}
+    public void declareListenerBinding(ListenerDeclarationMetadata listenerDeclarationMetadata) {
+        declareBinding(convertToDeclarationMetadata(listenerDeclarationMetadata));
+    }
 
-	public void declareBinding(DeclarationMetadata declarationMetadata) {
-		Assert.hasText(declarationMetadata.getQueueName(), "QueueName must be set!");
-		Assert.hasText(declarationMetadata.getExchangeType(), "ExchangeType must be set!");
-		if (null == declarationMetadata.getExchange()) {
-			declarationMetadata.setExchange(declarationMetadata.getQueueName());
-		}
-		if (null == declarationMetadata.getExchangeType()) {
-			declarationMetadata.setExchangeType(ExchangeTypes.DIRECT);
-		}
-		if (Boolean.FALSE.equals(queueDeclarePassive(declarationMetadata.getQueueName()))) {
-			Queue queue = new Queue(declarationMetadata.getQueueName(), DEFAULT_DURABLE, DEFAULT_EXCLUSIVE,
-					DEFAULT_AUTO_DELETE, resolveArguments(declarationMetadata.getArguments()));
-			rabbitAdmin.declareQueue(queue);
-			declareExchangeAndBinding(declarationMetadata);
-			log.info("Declare common queue for queueName {}", queue.getName());
-		}
-	}
+    public void declareDlxBinding(DlxDeclarationMetadata dlxDeclarationMetadata) {
+        Assert.hasText(dlxDeclarationMetadata.getQueueName(), "QueueName must be set!");
+        Assert.hasText(dlxDeclarationMetadata.getExchangeType(), "ExchangeType must be set!");
+        if (null == dlxDeclarationMetadata.getExchange()) {
+            dlxDeclarationMetadata.setExchange(dlxDeclarationMetadata.getQueueName());
+        }
+        if (null == dlxDeclarationMetadata.getExchangeType()) {
+            dlxDeclarationMetadata.setExchangeType(ExchangeTypes.DIRECT);
+        }
+        Assert.hasText(dlxDeclarationMetadata.getDlxExchange(), "DlxExchange must be set!");
+        Assert.hasText(dlxDeclarationMetadata.getDlxRoutingKey(), "DlxRoutingKey must be set!");
+        Assert.notNull(dlxDeclarationMetadata.getTtl(), "Ttl must be set!");
+        if (null == dlxDeclarationMetadata.getDlxQueue()) {
+            dlxDeclarationMetadata.setDlxQueue(String.format("%s-%s", dlxDeclarationMetadata.getQueueName(),
+                    dlxDeclarationMetadata.getTtl()));
+        }
+        Map<String, Object> arguments = dlxDeclarationMetadata.getArguments();
+        if (null == arguments) {
+            arguments = Maps.newHashMap();
+        }
+        arguments.put(DLX_EXCHANGE_KEY, dlxDeclarationMetadata.getDlxExchange());
+        arguments.put(DLX_ROUTING_KEY_KEY, dlxDeclarationMetadata.getDlxRoutingKey());
+        arguments.put(DLX_TTL_KEY, dlxDeclarationMetadata.getTtl());
+        //declare dlx queue
+        DirectExchange dlxExchange = new DirectExchange(dlxDeclarationMetadata.getDlxExchange());
+        rabbitAdmin.declareExchange(dlxExchange);
+        Queue dlxQueue = new Queue(dlxDeclarationMetadata.getDlxQueue(), DEFAULT_DURABLE, DEFAULT_EXCLUSIVE,
+                DEFAULT_AUTO_DELETE, null);
+        rabbitAdmin.declareQueue(dlxQueue);
+        rabbitAdmin.declareBinding(BindingBuilder.bind(dlxQueue).to(dlxExchange).with(dlxDeclarationMetadata.getDlxRoutingKey()));
+        //declare target queue
+        declareBinding(convertToDeclarationMetadata(dlxDeclarationMetadata));
+        log.info("Declare dlx queue for queueName {},source queue for queueName {}", dlxQueue.getName(), dlxDeclarationMetadata.getQueueName());
+    }
 
-	public void declareExchangeAndBinding(DeclarationMetadata declarationMetadata) {
-		Exchange exchange;
-		Binding actualBinding;
-		switch (declarationMetadata.getExchangeType().toLowerCase()) {
-			case ExchangeTypes.DIRECT:
-				exchange = directExchange(declarationMetadata.getExchange(), declarationMetadata.getArguments());
-				actualBinding = new Binding(declarationMetadata.getQueueName(), Binding.DestinationType.QUEUE,
-						declarationMetadata.getExchange(), declarationMetadata.getRoutingKey(),
-						resolveArguments(declarationMetadata.getArguments()));
-				break;
-			case ExchangeTypes.FANOUT:
-				exchange = fanoutExchange(declarationMetadata.getExchange(), declarationMetadata.getArguments());
-				actualBinding = new Binding(declarationMetadata.getQueueName(), Binding.DestinationType.QUEUE,
-						declarationMetadata.getExchange(), EMPTY, resolveArguments(declarationMetadata.getArguments()));
-				break;
-			case ExchangeTypes.TOPIC:
-				exchange = topicExchange(declarationMetadata.getExchange(), declarationMetadata.getArguments());
-				actualBinding = new Binding(declarationMetadata.getQueueName(), Binding.DestinationType.QUEUE,
-						declarationMetadata.getExchange(), declarationMetadata.getRoutingKey(),
-						resolveArguments(declarationMetadata.getArguments()));
-				break;
-			case ExchangeTypes.HEADERS:
-				exchange = headersExchange(declarationMetadata.getExchange(), declarationMetadata.getArguments());
-				actualBinding = new Binding(declarationMetadata.getQueueName(), Binding.DestinationType.QUEUE,
-						declarationMetadata.getExchange(), declarationMetadata.getRoutingKey(),
-						resolveArguments(declarationMetadata.getArguments()));
-				break;
-			default: {
-				throw new IllegalArgumentException(String.format("Exchange type invalid for value %s", declarationMetadata.getExchangeType()));
-			}
-		}
-		rabbitAdmin.declareExchange(exchange);
-		rabbitAdmin.declareBinding(actualBinding);
-	}
+    public void declareBinding(DeclarationMetadata declarationMetadata) {
+        Assert.hasText(declarationMetadata.getQueueName(), "QueueName must be set!");
+        Assert.hasText(declarationMetadata.getExchangeType(), "ExchangeType must be set!");
+        if (null == declarationMetadata.getExchange()) {
+            declarationMetadata.setExchange(declarationMetadata.getQueueName());
+        }
+        if (null == declarationMetadata.getExchangeType()) {
+            declarationMetadata.setExchangeType(ExchangeTypes.DIRECT);
+        }
+        if (Boolean.FALSE.equals(queueDeclarePassive(declarationMetadata.getQueueName()))) {
+            Queue queue = new Queue(declarationMetadata.getQueueName(), DEFAULT_DURABLE, DEFAULT_EXCLUSIVE,
+                    DEFAULT_AUTO_DELETE, resolveArguments(declarationMetadata.getArguments()));
+            rabbitAdmin.declareQueue(queue);
+            declareExchangeAndBinding(declarationMetadata);
+            log.info("Declare common queue for queueName {}", queue.getName());
+        }
+    }
 
-	private Exchange directExchange(String exchangeName, Map<String, Object> arguments) {
-		return new DirectExchange(exchangeName, DEFAULT_DURABLE, DEFAULT_AUTO_DELETE, resolveArguments(arguments));
-	}
+    public void declareExchangeAndBinding(DeclarationMetadata declarationMetadata) {
+        Exchange exchange;
+        Binding actualBinding;
+        switch (declarationMetadata.getExchangeType().toLowerCase()) {
+            case ExchangeTypes.DIRECT:
+                exchange = directExchange(declarationMetadata.getExchange(), declarationMetadata.getArguments());
+                actualBinding = new Binding(declarationMetadata.getQueueName(), Binding.DestinationType.QUEUE,
+                        declarationMetadata.getExchange(), declarationMetadata.getRoutingKey(),
+                        resolveArguments(declarationMetadata.getArguments()));
+                break;
+            case ExchangeTypes.FANOUT:
+                exchange = fanoutExchange(declarationMetadata.getExchange(), declarationMetadata.getArguments());
+                actualBinding = new Binding(declarationMetadata.getQueueName(), Binding.DestinationType.QUEUE,
+                        declarationMetadata.getExchange(), EMPTY, resolveArguments(declarationMetadata.getArguments()));
+                break;
+            case ExchangeTypes.TOPIC:
+                exchange = topicExchange(declarationMetadata.getExchange(), declarationMetadata.getArguments());
+                actualBinding = new Binding(declarationMetadata.getQueueName(), Binding.DestinationType.QUEUE,
+                        declarationMetadata.getExchange(), declarationMetadata.getRoutingKey(),
+                        resolveArguments(declarationMetadata.getArguments()));
+                break;
+            case ExchangeTypes.HEADERS:
+                exchange = headersExchange(declarationMetadata.getExchange(), declarationMetadata.getArguments());
+                actualBinding = new Binding(declarationMetadata.getQueueName(), Binding.DestinationType.QUEUE,
+                        declarationMetadata.getExchange(), declarationMetadata.getRoutingKey(),
+                        resolveArguments(declarationMetadata.getArguments()));
+                break;
+            default: {
+                throw new IllegalArgumentException(String.format("Exchange type invalid for value %s", declarationMetadata.getExchangeType()));
+            }
+        }
+        rabbitAdmin.declareExchange(exchange);
+        rabbitAdmin.declareBinding(actualBinding);
+    }
 
-	private Exchange fanoutExchange(String exchangeName, Map<String, Object> arguments) {
-		return new FanoutExchange(exchangeName, DEFAULT_DURABLE, DEFAULT_AUTO_DELETE, resolveArguments(arguments));
-	}
+    private Exchange directExchange(String exchangeName, Map<String, Object> arguments) {
+        return new DirectExchange(exchangeName, DEFAULT_DURABLE, DEFAULT_AUTO_DELETE, resolveArguments(arguments));
+    }
 
-	private Exchange topicExchange(String exchangeName, Map<String, Object> arguments) {
-		return new TopicExchange(exchangeName, DEFAULT_DURABLE, DEFAULT_AUTO_DELETE, resolveArguments(arguments));
-	}
+    private Exchange fanoutExchange(String exchangeName, Map<String, Object> arguments) {
+        return new FanoutExchange(exchangeName, DEFAULT_DURABLE, DEFAULT_AUTO_DELETE, resolveArguments(arguments));
+    }
 
-	private Exchange headersExchange(String exchangeName, Map<String, Object> arguments) {
-		return new HeadersExchange(exchangeName, DEFAULT_DURABLE, DEFAULT_AUTO_DELETE, resolveArguments(arguments));
-	}
+    private Exchange topicExchange(String exchangeName, Map<String, Object> arguments) {
+        return new TopicExchange(exchangeName, DEFAULT_DURABLE, DEFAULT_AUTO_DELETE, resolveArguments(arguments));
+    }
 
-	private Map<String, Object> resolveArguments(Map<String, Object> arguments) {
-		if (null == arguments) {
-			return null;
-		}
-		Map<String, Object> result = Maps.newHashMapWithExpectedSize(arguments.size());
-		for (Map.Entry<String, Object> entry : arguments.entrySet()) {
-			Object value = entry.getValue();
-			if (value instanceof String) {
-				result.put(beanExpressionResolverDelegator.resolveExpressionAsString(entry.getKey(), "Key"),
-						beanExpressionResolverDelegator.resolveExpression((String) value));
-			} else {
-				result.put(beanExpressionResolverDelegator.resolveExpressionAsString(entry.getKey(), "Key"), value);
-			}
-		}
-		return result;
-	}
+    private Exchange headersExchange(String exchangeName, Map<String, Object> arguments) {
+        return new HeadersExchange(exchangeName, DEFAULT_DURABLE, DEFAULT_AUTO_DELETE, resolveArguments(arguments));
+    }
+
+    private Map<String, Object> resolveArguments(Map<String, Object> arguments) {
+        if (null == arguments) {
+            return null;
+        }
+        Map<String, Object> result = Maps.newHashMapWithExpectedSize(arguments.size());
+        for (Map.Entry<String, Object> entry : arguments.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                result.put(beanExpressionResolverDelegator.resolveExpressionAsString(entry.getKey(), "Key"),
+                        beanExpressionResolverDelegator.resolveExpression((String) value));
+            } else {
+                result.put(beanExpressionResolverDelegator.resolveExpressionAsString(entry.getKey(), "Key"), value);
+            }
+        }
+        return result;
+    }
+
+    private DeclarationMetadata convertToDeclarationMetadata(DlxDeclarationMetadata dlxDeclarationMetadata) {
+        return new DeclarationMetadata.Builder()
+                .setQueueName(dlxDeclarationMetadata.getQueueName())
+                .setExchange(dlxDeclarationMetadata.getExchange())
+                .setExchangeType(dlxDeclarationMetadata.getExchangeType())
+                .setRoutingKey(dlxDeclarationMetadata.getRoutingKey())
+                .setArguments(dlxDeclarationMetadata.getArguments())
+                .build();
+    }
+
+    private DeclarationMetadata convertToDeclarationMetadata(ListenerDeclarationMetadata listenerDeclarationMetadata) {
+        return new DeclarationMetadata.Builder()
+                .setQueueName(listenerDeclarationMetadata.getQueueName())
+                .setExchange(listenerDeclarationMetadata.getExchange())
+                .setExchangeType(listenerDeclarationMetadata.getExchangeType())
+                .setRoutingKey(listenerDeclarationMetadata.getRoutingKey())
+                .setArguments(listenerDeclarationMetadata.getArguments())
+                .build();
+    }
 }
