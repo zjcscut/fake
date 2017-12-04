@@ -51,7 +51,6 @@ public class FakeAmqpProperties {
         protected Integer concurrentConsumers = CONCURRENT_CONSUMERS;
         protected Integer maxConcurrentConsumers = MAX_CONCURRENT_CONSUMERS;
         protected String listenerClassName;
-
     }
 
     @Setter

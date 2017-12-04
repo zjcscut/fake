@@ -35,7 +35,6 @@ public abstract class FakeAmqpComponentUtils {
 		CONVERTER.addDelegate(MediaType.APPLICATION_JSON_UTF8_VALUE, new Jackson2JsonMessageConverter());
 	}
 
-
 	public static CachingConnectionFactory getExistingCachingConnectionFactory(BeanFactory beanFactory) {
 		try {
 			return beanFactory.getBean(AmqpConstant.AMQP_RABBIT_CACHING_CONNECTION_FACTORY_BEAN_NAME, CachingConnectionFactory.class);

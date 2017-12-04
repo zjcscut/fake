@@ -95,7 +95,6 @@ public class FakeAmqpListenerAnnotationBeanPostProcessor
 		}
 	}
 
-
 	@Override
 	public void afterSingletonsInstantiated() {
 		this.typeCache.clear();
